@@ -1,0 +1,158 @@
+// Copyright (c) 2019 Cranberry King; 2025 Snowed In Studios Inc.
+
+#ifndef IB_BRDF_HSH
+#define IB_BRDF_HSH
+
+#include "ib_math.hsh"
+
+struct SpecularMaterialConstants
+{
+	float4 DiffuseAndRoughness;
+	float4 Specular;
+};
+
+float3 lambertBRDF(float3 albedo)
+{
+	return albedo * RcpPi;
+}
+
+float3 lambertRandomDir(float r1, float r2)
+{
+	float theta = acos(1.0f - 2.0f*r1) * 0.5f;
+	float cosTheta = cos(theta);
+	float sinTheta = sin(theta);
+	float phi = 2.0f * Pi * r2;
+
+	return float3(sinTheta*cos(phi), sinTheta*sin(phi), cosTheta);
+}
+
+float lambertPDF(float ndotl)
+{
+	return ndotl / Pi;
+}
+
+// Approximation was taken from gltf documentation
+// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#appendix-b-brdf-implementation
+float3 baseColorToF0(float3 baseColor, float metallic)
+{
+	float3 dielectricF0Approximated = float3(0.04f, 0.04f, 0.04f);
+    return lerp(dielectricF0Approximated, baseColor, metallic);
+}
+
+float3 fresnelSchlick(float3 r0, float3 n, float3 i)
+{
+	float a = 1.0f - dot(n, i);
+	return r0 + (1.0f - r0) * a*a*a*a*a;
+}
+
+float ggxD(float roughnessSq, float hdotn)
+{
+	// https://jcgt.org/published/0003/02/03/paper.pdf
+	float hdotnSq = hdotn * hdotn;
+	float t = mad(hdotnSq, roughnessSq - 1.0f, 1.0f);
+	return roughnessSq * rcp(t * t) / Pi;
+}
+
+float ggxLambda(float roughnessSq, float cosTheta)
+{
+	return 0.5f * (sqrt(roughnessSq * (rcp(cosTheta * cosTheta) - 1.0f) + 1.0f) - 1.0f);
+}
+
+// See: https://ubm-twvideo01.s3.amazonaws.com/o1/vault/gdc2017/Presentations/Hammon_Earl_PBR_Diffuse_Lighting.pdf for new correlated derivation
+float maskingShadowingCorrelatedG(float lambdaMasking, float lambdaShadowing)
+{
+	return rcp(1.0f + lambdaMasking + lambdaShadowing); 
+}
+
+float microfacetG(float lambda)
+{
+	return rcp(1.0f + lambda);
+}
+
+float3 ggxSmithCorrolatedBRDF(float roughness, float hdotn, float vdotn, float ldotn, float3 fresnel)
+{
+	float3 F = fresnel;
+
+	// Generalized form:
+	/*float roughnessSq = roughness*roughness;
+	float D = ggxD(roughnessSq, hdotn) * (hdotn > 0.0f ? 1.0f : 0.0f);
+	float maskingLambda = ggxLambda(roughnessSq, vdotn);
+	float shadowingLambda = ggxLambda(roughnessSq, ldotn);
+	float G = maskingShadowingCorrelatedG(maskingLambda, shadowingLambda);
+	return F * (G * D / (4.0f * vdotn * ldotn));*/
+
+	// Shadowing Masking Simplified Form:
+	float roughnessSq = roughness*roughness;
+	float D = ggxD(roughnessSq, hdotn) * (hdotn > 0.0f ? 1.0f : 0.0f);
+
+	// Algebraically merged shadowingLambda and maskingLambda
+	float t0 = vdotn * sqrt(mad(1.0f - roughnessSq, ldotn * ldotn, roughnessSq));
+	float t1 = ldotn * sqrt(mad(1.0f - roughnessSq, vdotn * vdotn, roughnessSq));
+	float simplifiedG = rcp(t0 + t1);
+	return F * (simplifiedG * D * 0.5f);
+}
+
+float3 halfDiscVNDFSampling(float3 V, float r1, float r2)
+{
+	// https://hal.science/hal-01509746/document
+	// orthonormal basis
+	float3 T1 = (V.z < 0.9999f) ? normalize(cross(V, float3(0,0,1))) : float3(1,0,0);
+	float3 T2 = cross(T1, V);
+	// sample point with polar coordinates (r, phi)
+	float a = 1.0 / (1.0f + V.z);
+	float r = sqrt(r1);
+	float phi = (r2<a) ? r2/a * Pi : Pi + (r2-a)/(1.0-a) * Pi;
+	float P1 = r*cos(phi);
+	float P2 = r*sin(phi)*((r2<a) ? 1.0f : V.z);
+	// compute normal
+	return P1*T1 + P2*T2 + sqrt(max(0.0f, 1.0f - P1*P1 - P2*P2))*V;
+}
+
+float3 sphericalCapVNDFSampling(float3 v, float r1, float r2)
+{
+	// https://arxiv.org/pdf/2306.05044.pdf
+	// sample a spherical cap in (-v.z, 1]
+	float phi = 2.0f * Pi * r1;
+	float z = mad((1.0f - r2), (1.0f + v.z), -v.z);
+	float sinTheta = sqrt(clamp(1.0f - z * z, 0.0f, 1.0f));
+	float x = sinTheta * cos(phi);
+	float y = sinTheta * sin(phi);
+	float3 c = float3(x, y, z);
+	// compute halfway direction;
+	float3 h = c + v;
+	// return without normalization (as this is done later)
+	return h;
+}
+
+float3 ggxRandomHalfVector(float3 view, float r1, float r2, float roughness)
+{
+	// Sampling routine from https://hal.science/hal-01509746/document
+	// https://jcgt.org/published/0007/04/01/paper.pdf
+	// Improvement: https://arxiv.org/pdf/2306.05044.pdf
+
+	// stretch view
+	float roughnessSq = roughness*roughness;
+	float3 V = normalize(float3(roughnessSq * view.x, roughnessSq * view.y, view.z));
+
+	// float3 N = halfDiscVNDFSampling(V, r1, r2);
+	float3 N = sphericalCapVNDFSampling(V, r1, r2);
+	// unstretch
+	N = normalize(float3(roughnessSq*N.x, roughnessSq*N.y, max(0.0f, N.z)));
+	return N;
+}
+
+float ggxPDF(float roughness, float hdotn, float vdotn)
+{
+	// https://jcgt.org/published/0007/04/01/paper.pdf
+	float roughnessSq = roughness*roughness;
+	// Base formulation is:
+	// VNDF (Visible normal distribution function)
+	// Dv = D*G1*v.h/v.n
+	// PDF = Dv/(4*v.h)
+	// Simplifying:
+	// PDF = D*G1*v.h/(4*v.n*v.h)
+	// PDF = D*G1/(4*v.n)
+	return ggxD(roughnessSq, hdotn) * microfacetG(ggxLambda(roughnessSq, vdotn)) / (4.0f * vdotn);
+}
+
+#endif // IB_BRDF_HSH

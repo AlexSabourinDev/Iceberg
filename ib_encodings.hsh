@@ -1,0 +1,223 @@
+// Copyright (c) 2019 Cranberry King; 2025 Snowed In Studios Inc.
+
+#ifndef IB_ENCODINGS_H
+#define IB_ENCODINGS_H
+
+// https://knarkowicz.wordpress.com/2014/04/16/octahedron-normal-vector-encoding/
+float2 octahedralWrap( float2 v )
+{
+	float2 result;
+	result.x = (1.0f - abs(v.y)) * (v.x >= 0.0f ? 1.0f : -1.0f);
+	result.y = (1.0f - abs(v.x)) * (v.y >= 0.0f ? 1.0f : -1.0f);
+	return result;
+}
+
+float2 toSquareOctahedral(float3 dir)
+{
+	dir.xy = dir.xy * rcp( abs( dir.x ) + abs( dir.y ) + abs( dir.z ) );
+	float2 results = dir.z >= 0.0f ? dir.xy : octahedralWrap( dir.xy );
+	results = mad(results, 0.5f, 0.5f);
+	return results;
+}
+
+float3 fromSquareOctahedral(float2 oct)
+{
+	oct = mad(oct, 2.0f, -1.0f);
+ 
+	// https://twitter.com/Stubbesaurus/status/937994790553227264
+	float3 n = float3(oct.x, oct.y, 1.0f - abs(oct.x) - abs(oct.y));
+	float t = saturate( -n.z );
+	n.x += n.x >= 0.0f ? -t : t;
+	n.y += n.y >= 0.0f ? -t : t;
+	return normalize( n );
+}
+
+float2 toPyramid(float3 dir)
+{
+	dir.xy = dir.xy * rcp( abs( dir.x ) + abs( dir.y ) + abs( dir.z ) );
+	float2 uv = float2(dir.x + dir.y, dir.y - dir.x);
+	return mad(uv, 0.5f, 0.5f);
+}
+
+float3 fromPyramid(float2 uv)
+{
+	//uv = uv * 2.0f - 1.0f;
+	//float3 dir;
+	//dir.x = (uv.x - uv.y) / 2.0f;
+	//dir.y = (uv.x + uv.y) / 2.0f;
+	// Simplifies to:
+	float3 dir;
+	dir.x = uv.x - uv.y;
+	dir.y = uv.x + uv.y - 1.0f;
+
+	dir.z = 1.0f - abs(dir.x) - abs(dir.y);
+	return normalize(dir);
+}
+
+// TODO: Clean these up
+float2 toRectOctahedral(float3 dir)
+{
+	bool isLowerHemisphere = dir.z < 0.0f;
+	float2 pyramid = toPyramid(dir);
+	pyramid.x = isLowerHemisphere ? 1.0f-pyramid.x : pyramid.x; // Mirror X in the lower hemisphere
+	float offset = isLowerHemisphere ? 0.5f : 0.0f;
+	pyramid.x = pyramid.x * 0.5f + offset;
+
+	return pyramid;
+}
+
+float3 fromRectOctahedral(float2 uv)
+{
+	bool isLowerHemisphere = uv.x >= 0.5f;
+	uv.x *= 2.0f;
+	uv.x -= isLowerHemisphere ? 1.0f : 0.0f;
+	uv.x = isLowerHemisphere ? 1.0f-uv.x : uv.x;
+	float3 dir = fromPyramid(uv);
+	dir.z = isLowerHemisphere ? -dir.z : dir.z;
+	return dir;
+}
+
+int2 wrapSquareOctTexel(int2 texel, int res)
+{
+	// TODO: Can we simplify this?
+    if(texel.y >= res)
+    {
+        texel.y = 2 * res - 1 - texel.y;
+        texel.x = res - 1 - texel.x;
+    }
+    else if(texel.y < 0)
+    {
+        texel.y = -1-texel.y;
+        texel.x = res - 1 - texel.x;
+    }
+    
+    if(texel.x >= res)
+    {
+        texel.x = 2 * res - 1 - texel.x;
+        texel.y = res - 1 - texel.y;
+    }
+    else if(texel.x < 0)
+    {
+        texel.x = -1-texel.x;
+        texel.y = res - 1 - texel.y;
+    }
+    
+    return texel;
+}
+
+uint2 packUnorm(float2 v, uint bits)
+{
+	float maxValue = float((1u << bits) - 1);
+	uint2 u = uint2(round(v * maxValue));
+	return u;
+}
+
+float2 unpackUnorm(uint2 u, uint bits)
+{
+	float invMaxValue = rcp(float((1u << bits) - 1));
+	return float2(u) * invMaxValue;
+}
+
+uint3 packUnorm(float3 v, uint bits)
+{
+	float maxValue = float((1u << bits) - 1);
+	uint3 u = uint3(round(v * maxValue));
+	return u;
+}
+
+float3 unpackUnorm(uint3 u, uint bits)
+{
+	float invMaxValue = rcp(float((1u << bits) - 1));
+	return float3(u) * invMaxValue;
+}
+
+uint packEvenBits16(uint value)
+{
+	value &= 0x55555555;
+	value |= (value >> 1);
+	value &= 0x33333333;
+	value |= (value >> 2);
+	value &= 0x0000000F; // Clamp to 15
+
+	// Full 16 bit packing ops.
+	/*value &= 0x0F0F0F0F;
+	value |= (value >> 4);
+	value &= 0x00FF00FF;
+	value |= (value >> 8);
+	value &= 0x0000FFFF;*/
+
+	return value;
+}
+
+uint packEvenBits256(uint value)
+{
+	value &= 0x55555555;
+	value |= (value >> 1);
+	value &= 0x33333333;
+	value |= (value >> 2);
+	value &= 0x0F0F0F0F;
+	value |= (value >> 4);
+	value &= 0x000000FF;
+	/*value &= 0x00FF00FF;
+	value |= (value >> 8);
+	value &= 0x0000FFFF;*/
+
+	return value;
+}
+
+uint2 rotatingZCurve16x16(uint index)
+{
+	uint2 v;
+	v.x = (index & 0x01)
+		| ((index >> 2) & 0x06)
+		| ((index >> 4) & 0x08); // This line is only necessary for larger than 8x8 blocks.
+
+	v.y = ((index >> 1) & 0x03)
+		| ((index >> 3) & 0x0C);
+
+	return v;
+}
+
+uint2 zCurve16x16(uint index)
+{
+	return uint2(packEvenBits16(index), packEvenBits16(index >> 1));
+}
+
+uint2 zCurve256x256(uint index)
+{
+	return uint2(packEvenBits256(index), packEvenBits256(index >> 1));
+}
+
+// Expecting width to be a constant.
+// In case you search: Morton Curve
+uint2 zCurve(uint index, uint width)
+{
+	if(width > 16)
+	{
+		return zCurve256x256(index);
+	}
+	else
+	{
+		return rotatingZCurve16x16(index);
+	}
+}
+
+uint packRGBA(float4 v)
+{
+	return (uint)(saturate(v.r) * 255.0f)
+		| ((uint)(saturate(v.g) * 255.0f) << 8)
+		| ((uint)(saturate(v.b) * 255.0f) << 16)
+		| ((uint)(saturate(v.a) * 255.0f) << 24);
+}
+
+float4 unpackRGBA(uint rgba)
+{
+	float4 output = (float4)0;
+	output.r = (float)(rgba & 0xFF) / 255.0f;
+	output.g = (float)((rgba >> 8) & 0xFF) / 255.0f;
+	output.b = (float)((rgba >> 16) & 0xFF) / 255.0f;
+	output.a = (float)((rgba >> 24) & 0xFF) / 255.0f;
+	return output;
+}
+
+#endif // IB_ENCODINGS_H

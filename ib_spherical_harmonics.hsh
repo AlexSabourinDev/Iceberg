@@ -1,0 +1,255 @@
+// Copyright (c) 2019 Cranberry King; 2025 Snowed In Studios Inc.
+
+#ifndef IB_SPHERICAL_HARMONICS_HSH
+#define IB_SPHERICAL_HARMONICS_HSH
+
+#include "ib_encodings.hsh"
+
+typedef float4 SHL1;
+struct ColorSH
+{
+	SHL1 R;
+	SHL1 G;
+	SHL1 B;
+};
+
+#define SH_GEOMERIC 1
+#if SH_GEOMERIC
+
+struct PackedColorSH
+{
+	uint4 Data;
+};
+
+PackedColorSH packSH(ColorSH sh)
+{
+	float3 ambient = float3(sh.R.x, sh.G.x, sh.B.x);
+	float3 dirR = sh.R.yzw;
+	float3 dirG = sh.G.yzw;
+	float3 dirB = sh.B.yzw;
+
+	float3 scale = float3
+	(
+		length(dirR),
+		length(dirG),
+		length(dirB)
+	);
+
+	// We need to make sure we encode a valid direction.
+	// The actual direction doesn't matter if scale is 0
+	// Its going to be scaled down to 0 in the unpacking anyways.
+	dirR = scale.r > 0.0f ? dirR / scale.r : float3(1.0f, 0.0f, 0.0f);
+	dirG = scale.g > 0.0f ? dirG / scale.g : float3(1.0f, 0.0f, 0.0f);
+	dirB = scale.b > 0.0f ? dirB / scale.b : float3(1.0f, 0.0f, 0.0f);
+
+	uint2 octDirR = packUnorm(toSquareOctahedral(dirR), 9);
+	uint2 octDirG = packUnorm(toSquareOctahedral(dirG), 9);
+	uint2 octDirB = packUnorm(toSquareOctahedral(dirB), 9);
+
+	uint3 packedScale = packUnorm((scale / ambient), 8);
+
+	// Can ignore sign bit, expected to be positive.
+	uint halfAmbientR = f32tof16(max(ambient.r, 0.0f));
+	uint halfAmbientG = f32tof16(max(ambient.g, 0.0f));
+	uint halfAmbientB = f32tof16(max(ambient.b, 0.0f));
+
+	PackedColorSH packed;
+
+	// Bit format: 15 | 9 | 8
+	packed.Data[0] = halfAmbientR | (octDirR.x << 15) | (packedScale.r << 24);
+	packed.Data[1] = halfAmbientG | (octDirG.x << 15) | (packedScale.g << 24);
+	packed.Data[2] = halfAmbientB | (octDirB.x << 15) | (packedScale.b << 24);
+	packed.Data[3] = octDirR.y | (octDirG.y << 9) | (octDirB.y << 18); // 5 bits leftover
+
+	return packed;
+}
+
+ColorSH unpackSH(PackedColorSH packed)
+{
+	uint3 packedScale = uint3(packed.Data[0] >> 24, packed.Data[1] >> 24, packed.Data[2] >> 24);
+	uint halfAmbientR = packed.Data[0] & 0x7FFF;
+	uint halfAmbientG = packed.Data[1] & 0x7FFF;
+	uint halfAmbientB = packed.Data[2] & 0x7FFF;
+
+	uint2 packedDirR = uint2((packed.Data[0] >> 15) & 0x1FF, packed.Data[3] & 0x1FF);
+	uint2 packedDirG = uint2((packed.Data[1] >> 15) & 0x1FF, (packed.Data[3] >> 9) & 0x1FF);
+	uint2 packedDirB = uint2((packed.Data[2] >> 15) & 0x1FF, (packed.Data[3] >> 18) & 0x1FF);
+
+	float3 ambient = float3(f16tof32(halfAmbientR), f16tof32(halfAmbientG), f16tof32(halfAmbientB));
+	float3 scale = ambient * unpackUnorm(packedScale, 8);
+
+	float3 dirR = fromSquareOctahedral(unpackUnorm(packedDirR, 9));
+	float3 dirG = fromSquareOctahedral(unpackUnorm(packedDirG, 9));
+	float3 dirB = fromSquareOctahedral(unpackUnorm(packedDirB, 9));
+
+	ColorSH sh;
+	sh.R = float4(ambient.x, dirR * scale.r);
+	sh.G = float4(ambient.y, dirG * scale.g);
+	sh.B = float4(ambient.z, dirB * scale.b);
+
+	return sh;
+}
+
+// Geomeric SH
+// https://grahamhazel.com/blog/2017/12/18/alternative-definition-of-spherical-harmonics-for-lighting/
+
+SHL1 shBasisL1_Geomeric(float3 dir) // Only used during solver
+{
+	SHL1 result;
+	result.x = 1.0f;			// L=0 , M= 0
+	result.y = dir.x;			// L=1 , M=-1
+	result.z = dir.y;			// L=1 , M= 0
+	result.w = dir.z;			// L=1 , M= 1
+	return result;
+}
+
+SHL1 shNormalize_Geomeric(SHL1 sh)
+{
+	return sh / (4.0f * 3.1415f);
+}
+
+ColorSH shNormalize_Geomeric(ColorSH sh)
+{
+	ColorSH result;
+	result.R = shNormalize_Geomeric(sh.R);
+	result.G = shNormalize_Geomeric(sh.G);
+	result.B = shNormalize_Geomeric(sh.B);
+	return result;
+}
+
+float shEvaluate_Geomeric(SHL1 sh, float3 dir)
+{
+	return sh.x + 3.0f * dot(sh.yzw, dir);
+}
+
+float3 shEvaluate_Geomeric(ColorSH sh, float3 dir)
+{
+	return float3(
+		shEvaluate_Geomeric(sh.R, dir),
+		shEvaluate_Geomeric(sh.G, dir),
+		shEvaluate_Geomeric(sh.B, dir));
+}
+
+// https://grahamhazel.com/blog/2017/12/22/converting-sh-radiance-to-irradiance/
+float shCosineLobe_Geomeric(SHL1 sh, float3 dir)
+{
+	return (sh.x + 2.0f * dot(sh.yzw, dir)) * 3.1415f;
+}
+
+float3 shCosineLobe_Geomeric(ColorSH sh, float3 dir)
+{
+	return float3(
+		shCosineLobe_Geomeric(sh.R, dir),
+		shCosineLobe_Geomeric(sh.G, dir),
+		shCosineLobe_Geomeric(sh.B, dir));
+}
+
+// https://grahamhazel.com/blog/2017/12/22/converting-sh-radiance-to-irradiance/
+float shLambertianBRDF_GeomericLinear(SHL1 sh, float3 dir)
+{
+	return sh.x + 2.0f * dot(sh.yzw, dir);
+}
+
+float3 shLambertianBRDF_GeomericLinear(ColorSH sh, float3 dir)
+{
+	return float3(
+		shLambertianBRDF_GeomericLinear(sh.R, dir),
+		shLambertianBRDF_GeomericLinear(sh.G, dir),
+		shLambertianBRDF_GeomericLinear(sh.B, dir));
+}
+
+float shLambertianBRDF_GeomericNonLinear(SHL1 sh, float3 dir)
+{
+	// Non-linear model:
+	float R0 = sh.x;
+	float3 R1 = sh.yzw;
+
+	float R1overR0 = length(R1) / R0;
+	float a = (1.0f - R1overR0) / (1.0f + R1overR0);
+	float q = mad(dot(normalize(R1), dir), 0.5f, 0.5f);
+	float p = mad(R1overR0, 2.0f, 1.0f);
+	return R0 * mad((p + 1.0f) * pow(q, p), 1.0f - a, a);
+}
+
+float3 shLambertianBRDF_GeomericNonLinear(ColorSH sh, float3 dir)
+{
+	return float3(
+		shLambertianBRDF_GeomericNonLinear(sh.R, dir),
+		shLambertianBRDF_GeomericNonLinear(sh.G, dir),
+		shLambertianBRDF_GeomericNonLinear(sh.B, dir));
+}
+
+#define shBasisL1 shBasisL1_Geomeric
+#define shEvaluate shEvaluate_Geomeric
+#define shCosineLobe shCosineLobe_Geomeric
+#define shLambertianBRDF shLambertianBRDF_GeomericNonLinear
+#define shNormalize shNormalize_Geomeric
+
+#else // SH_GEOMERIC
+
+// Normalized SH
+
+// https://github.com/sebh/HLSL-Spherical-Harmonics/blob/master/SphericalHarmonics.hlsl
+SHL1 shBasisL1_Norm(float3 dir)
+{
+	SHL1 result;
+	result.x = 0.28209479177387814347403972578039f;			// L=0 , M= 0
+	result.y =-0.48860251190291992158638462283836f * dir.y;	// L=1 , M=-1
+	result.z = 0.48860251190291992158638462283836f * dir.z;	// L=1 , M= 0
+	result.w =-0.48860251190291992158638462283836f * dir.x;	// L=1 , M= 1
+	return result;
+}
+
+SHL1 shCosineLobeL1_Norm(float3 dir)
+{
+	SHL1 result;
+	result.x = 0.8862269254527580137f;			// L=0 , M= 0
+	result.y =-1.0233267079464884885f * dir.y;	// L=1 , M=-1
+	result.z = 1.0233267079464884885f * dir.z;	// L=1 , M= 0
+	result.w =-1.0233267079464884885f * dir.x;	// L=1 , M= 1
+	return result;
+}
+
+float shEvaluate_Norm(SHL1 sh, float3 dir)
+{
+	SHL1 sampleSH = shBasisL1_Norm(dir);
+	return dot(sampleSH, sh);
+}
+
+float3 shEvaluate_Norm(ColorSH sh, float3 dir)
+{
+	SHL1 sampleSH = shBasisL1_Norm(dir);
+	return float3(dot(sh.R, sampleSH), dot(sh.G, sampleSH), dot(sh.B, sampleSH));
+}
+
+float3 shCosineLobe_Norm(ColorSH sh, float3 dir)
+{
+	SHL1 cosineSH = shCosineLobeL1_Norm(dir);
+	return float3(dot(sh.R, cosineSH), dot(sh.G, cosineSH), dot(sh.B, cosineSH));
+}
+
+float3 shLambertianBRDF_Norm(ColorSH sh, float3 dir)
+{
+	SHL1 cosineSH = shCosineLobeL1_Norm(dir) / 3.1415f;
+	return float3(dot(sh.R, cosineSH), dot(sh.G, cosineSH), dot(sh.B, cosineSH));
+}
+
+SHL1 shNormalize_Norm(SHL1 sh)
+{
+	return sh; // Do nothing here, normalization is folded into our basis
+}
+
+ColorSH shNormalize_Norm(ColorSH sh)
+{
+	return sh; // Do nothing here, normalization is folded into our basis
+}
+
+#define shBasisL1 shBasisL1_Norm
+#define shEvaluate shEvaluate_Norm
+#define shCosineLobe shCosineLobe_Norm
+#define shLambertianBRDF shLambertianBRDF_Norm
+#define shNormalize shNormalize_Norm
+
+#endif // !SH_GEOMERIC
+
+#endif // IB_SPHERICAL_HARMONICS_HSH

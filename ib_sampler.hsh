@@ -1,0 +1,16 @@
+// Copyright (c) 2019 Cranberry King; 2025 Snowed In Studios Inc.
+
+#ifndef IB_SAMPLER_HSH
+#define IB_SAMPLER_HSH
+
+// When modifying, make sure to match with the matching enum in ib_core.h
+enum
+{
+    ib_Sampler_LinearRepeat = 0,
+	ib_Sampler_LinearClamp,
+    ib_Sampler_CompareLess,
+	ib_Sampler_NearestClamp,
+    ib_Sampler_Count
+};
+
+#endif // IB_SAMPLER_HSH

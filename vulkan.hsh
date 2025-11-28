@@ -1,0 +1,51 @@
+// Copyright (c) 2019 Cranberry King; 2025 Snowed In Studios Inc.
+
+#ifndef VULKAN_HSH
+#define VULKAN_HSH
+
+namespace vk
+{
+	// Inline SPIR-V https://github.com/microsoft/DirectXShaderCompiler/wiki/GL_EXT_spirv_intrinsics-for-SPIR-V-code-gen
+
+	// https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#Group_Operation
+	static uint const ReduceOperation = 0;
+
+	[[vk::ext_instruction(/* OpGroupNonUniformBallotFindLSB */ 343)]]
+	uint OpGroupNonUniformBallotFindLSB(uint scope, uint4 ballot);
+
+	[[vk::ext_instruction(/* OpGroupNonUniformBallotFindMSB */ 344)]]
+	uint OpGroupNonUniformBallotFindMSB(uint scope, uint4 ballot);
+
+	[[vk::ext_instruction(/* OpGroupNonUniformBallotBitCount */ 342)]]
+	uint OpGroupNonUniformBallotBitCount(uint scope, [[vk::ext_literal]] uint groupOperation, uint4 ballot);
+
+	[[vk::ext_capability(/*GroupNonUniformShuffleRelative*/ 66)]]
+	[[vk::ext_instruction(/* OpGroupNonUniformShuffleXor */ 346)]]
+	float OpGroupNonUniformShuffleXor(uint scope, float value, uint mask);
+
+	[[vk::ext_capability(/*GroupNonUniformShuffleRelative*/ 66)]]
+	[[vk::ext_instruction(/* OpGroupNonUniformShuffleUp */ 347)]]
+	float OpGroupNonUniformShuffleUp(uint scope, float value, uint delta);
+
+	[[vk::ext_capability(/*GroupNonUniformShuffleRelative*/ 66)]]
+	[[vk::ext_instruction(/* OpGroupNonUniformShuffleDown */ 348)]]
+	float OpGroupNonUniformShuffleDown(uint scope, float value, uint delta);
+
+	[[vk::ext_builtin_input(40)]]
+	static uint const SubgroupId;
+
+	[[vk::ext_builtin_input(38)]]
+	static uint const NumSubgroups;
+}
+
+uint WaveIndex()
+{
+	return vk::SubgroupId;
+}
+
+uint WaveCount()
+{
+	return vk::NumSubgroups;
+}
+
+#endif // VULKAN_HSH
