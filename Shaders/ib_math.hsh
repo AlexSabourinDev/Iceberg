@@ -5,6 +5,7 @@
 
 static float const Pi = 3.14159265358979323846264338327f;
 static float const RcpPi = 1.0f / Pi;
+static float const FltMax = 3.402823466e+38f;
 
 float4 bilinear(float4 r0, float4 r1, float4 r2, float4 r3, float2 t)
 {

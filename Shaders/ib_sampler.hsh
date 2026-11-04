@@ -7,9 +7,10 @@
 enum
 {
     ib_Sampler_LinearRepeat = 0,
-	ib_Sampler_LinearClamp,
+    ib_Sampler_LinearClamp,
     ib_Sampler_CompareLess,
-	ib_Sampler_NearestClamp,
+    ib_Sampler_NearestClamp,
+    ib_Sampler_NearestRepeat,
     ib_Sampler_Count
 };
 

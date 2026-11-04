@@ -19,6 +19,15 @@ extern "C"
 #define ib_unused(a) (a)
 #define ib_stringify(...) #__VA_ARGS__
 
+#define alignof __alignof
+#define typeof __typeof__
+
+#ifdef _MSC_VER
+// Annoyingly, MSVC doesn't define this
+// Based on cstddef
+typedef double max_align_t;
+#endif // _MSC_VER
+
 #ifdef IB_DEBUG
 
 #if !defined(ib_assert)
@@ -52,47 +61,24 @@ void ib_assertHarness(char const* file, uint32_t line, char const* func, bool te
 #define ib_max(lhs, rhs) (lhs > rhs ? lhs : rhs)
 #define ib_clamp(x, min, max) ib_max(ib_min(x, max), min)
 
-// Fixed Sized Queue (fsq)
-#define ib_fsq(ElemType, MaxSize) \
+// Range
+#define ib_srange(Type, StaticSize) \
     struct \
     { \
-        ElemType Data[MaxSize]; \
+        Type Array[StaticSize]; \
+        Type* Data; \
         uint32_t Count; \
     }
 
-#define ib_fsqMaxSize(queue) ib_arrayCount((queue).Data)
-#define ib_fsqPush(queue) \
-        ( (queue)->Data + ib_fsqGrowImpl(&((queue)->Count), ib_arrayCount((queue)->Data)) )
-#define ib_fsqPop(queue) ib_fsqShrinkImpl(&((queue)->Count))
-#define ib_fsqClear(queue) ((queue)->Count = 0)
-#define ib_fsqPeek(queue) ((queue)->Data + ((queue)->Count - 1))
+#define ib_srangeBegin(range) \
+    (range.Data != NULL ? range.Data : &range.Array[0])
 
-inline void ib_fsqShrinkImpl(uint32_t* count)
-{
-    if(*count > 0)
-    {
-        (*count)--;
-    }
-    else
-    {
-        ib_assert(false);
-    }
-}
+#define ib_srangeEnd(range) \
+    (range.Data != NULL ? (range.Data + range.Count) : (&range.Array[ib_arrayCount(range.Array)]))
 
-inline uint32_t ib_fsqGrowImpl(uint32_t* count, uint32_t maxSize)
-{
-    if(*count < maxSize)
-    {
-        return (*count)++;
-    }
-    else
-    {
-        ib_assert(false);
-        return 0; // Stomp on first element. But don't write into other memory.
-    }
-}
+#define ib_srangeCapacity(range) \
+    (range.Data != NULL ? range.Count : ib_arrayCount(range.Array))
 
-// Range
 #define ib_range(Type) \
     struct \
     { \
@@ -103,28 +89,23 @@ inline uint32_t ib_fsqGrowImpl(uint32_t* count, uint32_t maxSize)
 // This only works on fixed sized array. A pointer will give you an incorrect result here.
 #define ib_staticArrayRange(...) \
     { \
-        (__VA_ARGS__), \
-        ib_arrayCount((__VA_ARGS__)) \
+        .Data = (__VA_ARGS__), \
+        .Count = ib_arrayCount((__VA_ARGS__)) \
     }
 
 // Takes a single element pointer
 #define ib_singlePtrRange(...) \
     { \
-        __VA_ARGS__, \
-        1 \
+        .Data = __VA_ARGS__, \
+        .Count = 1 \
     }
-
-// Path utils
-
-extern char const* ib_IcebergWorkingDirectory;
-
-char* ib_extractFilenameFromPath(char const* path);
-char* ib_concatenatePaths(char const* a, char const* b);
-void ib_splitPath(char const* path, char** outFolderPath, char** outFilename);
 
 uint32_t ib_firstBitHighU32(uint32_t value);
 uint32_t ib_firstBitLowU32(uint32_t value);
 uint32_t ib_bitCountU32(uint32_t value);
+uint32_t ib_firstBitHighU64(uint64_t value);
+uint32_t ib_firstBitLowU64(uint64_t value);
+uint32_t ib_bitCountU64(uint64_t value);
 
 #ifdef __cplusplus
 }

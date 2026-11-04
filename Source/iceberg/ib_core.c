@@ -1,6 +1,6 @@
 // Copyright (c) 2019 Cranberry King; 2025 Snowed In Studios Inc.
 
-#include "ib_core.h"
+#include <iceberg/ib_core.h>
 
 // #define VK_USE_PLATFORM_WIN32_KHR
 // Don't include Windows.h in our vulkan header.
@@ -10,7 +10,7 @@ typedef void* HANDLE;
 typedef void* HWND;
 typedef void* HINSTANCE;
 typedef wchar_t WCHAR;
-typedef WCHAR const* LPCWSTR; 
+typedef WCHAR const* LPCWSTR;
 typedef struct _SECURITY_ATTRIBUTES SECURITY_ATTRIBUTES;
 typedef void* HMONITOR;
 typedef unsigned long DWORD;
@@ -32,6 +32,7 @@ PFN_vkGetBufferDeviceAddressKHR ib_vkGetBufferDeviceAddressKHR;
 PFN_vkSetDebugUtilsObjectNameEXT ib_vkSetDebugUtilsObjectNameEXT;
 PFN_vkCmdBeginDebugUtilsLabelEXT ib_vkCmdBeginDebugUtilsLabelEXT;
 PFN_vkCmdEndDebugUtilsLabelEXT ib_vkCmdEndDebugUtilsLabelEXT;
+PFN_vkCmdBindDescriptorSets2KHR ib_vkCmdBindDescriptorSets2KHR;
 
 VkResult vkCreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* createInfo, const VkAllocationCallbacks* allocator, VkDebugUtilsMessengerEXT* debugMessenger)
 {
@@ -54,9 +55,9 @@ void vkDestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerE
 }
 
 VkResult vkGetPipelineExecutableStatisticsKHR(VkDevice device,
-    VkPipelineExecutableInfoKHR const* executableInfo,
-    uint32_t* statisticCount,
-    VkPipelineExecutableStatisticKHR* statistics)
+                                              VkPipelineExecutableInfoKHR const* executableInfo,
+                                              uint32_t* statisticCount,
+                                              VkPipelineExecutableStatisticKHR* statistics)
 {
     if (ib_vkGetPipelineExecutableStatisticsKHR != NULL)
     {
@@ -69,24 +70,24 @@ VkResult vkGetPipelineExecutableStatisticsKHR(VkDevice device,
 }
 
 VkResult vkGetPipelineExecutableInternalRepresentationsKHR(
-	VkDevice device,
-	const VkPipelineExecutableInfoKHR* pExecutableInfo,
-	uint32_t* pInternalRepresentationCount,
-	VkPipelineExecutableInternalRepresentationKHR* pInternalRepresentations)
+    VkDevice device,
+    const VkPipelineExecutableInfoKHR* pExecutableInfo,
+    uint32_t* pInternalRepresentationCount,
+    VkPipelineExecutableInternalRepresentationKHR* pInternalRepresentations)
 {
-	if (ib_vkGetPipelineExecutableInternalRepresentationsKHR != NULL)
-	{
-		return ib_vkGetPipelineExecutableInternalRepresentationsKHR(device, pExecutableInfo, pInternalRepresentationCount, pInternalRepresentations);
-	}
-	else
-	{
-		return VK_ERROR_EXTENSION_NOT_PRESENT;
-	}
+    if (ib_vkGetPipelineExecutableInternalRepresentationsKHR != NULL)
+    {
+        return ib_vkGetPipelineExecutableInternalRepresentationsKHR(device, pExecutableInfo, pInternalRepresentationCount, pInternalRepresentations);
+    }
+    else
+    {
+        return VK_ERROR_EXTENSION_NOT_PRESENT;
+    }
 }
 
 VkResult VKAPI_CALL vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR(
-    VkPhysicalDevice                            physicalDevice,
-    uint32_t                                    queueFamilyIndex,
+    VkPhysicalDevice physicalDevice,
+    uint32_t queueFamilyIndex,
     uint32_t*                                   pCounterCount,
     VkPerformanceCounterKHR*                    pCounters,
     VkPerformanceCounterDescriptionKHR*         pCounterDescriptions)
@@ -141,6 +142,16 @@ void vkCmdEndDebugUtilsLabelEXT(VkCommandBuffer commandBuffer)
     }
 }
 
+VKAPI_ATTR void VKAPI_CALL vkCmdBindDescriptorSets2KHR(
+    VkCommandBuffer commandBuffer,
+    const VkBindDescriptorSetsInfoKHR*          pBindDescriptorSetsInfo)
+{
+    if (ib_vkCmdBindDescriptorSets2KHR != NULL)
+    {
+        ib_vkCmdBindDescriptorSets2KHR(commandBuffer, pBindDescriptorSetsInfo);
+    }
+}
+
 #define ib_getVulkanFunc(instance, funcName) (PFN_ ## funcName) vkGetInstanceProcAddr(instance, #funcName)
 
 void ib_loadVulkanFunctions(VkInstance instance)
@@ -148,17 +159,18 @@ void ib_loadVulkanFunctions(VkInstance instance)
     ib_vkCreateDebugUtilsMessengerEXT = ib_getVulkanFunc(instance, vkCreateDebugUtilsMessengerEXT);
     ib_vkDestroyDebugUtilsMessengerEXT = ib_getVulkanFunc(instance, vkDestroyDebugUtilsMessengerEXT);
     ib_vkGetPipelineExecutableStatisticsKHR = ib_getVulkanFunc(instance, vkGetPipelineExecutableStatisticsKHR);
-	ib_vkGetPipelineExecutableInternalRepresentationsKHR = ib_getVulkanFunc(instance, vkGetPipelineExecutableInternalRepresentationsKHR);
+    ib_vkGetPipelineExecutableInternalRepresentationsKHR = ib_getVulkanFunc(instance, vkGetPipelineExecutableInternalRepresentationsKHR);
     ib_vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR = ib_getVulkanFunc(instance, vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR);
     ib_vkGetBufferDeviceAddressKHR = ib_getVulkanFunc(instance, vkGetBufferDeviceAddressKHR);
     ib_vkSetDebugUtilsObjectNameEXT = ib_getVulkanFunc(instance, vkSetDebugUtilsObjectNameEXT);
     ib_vkCmdBeginDebugUtilsLabelEXT = ib_getVulkanFunc(instance, vkCmdBeginDebugUtilsLabelEXT);
     ib_vkCmdEndDebugUtilsLabelEXT = ib_getVulkanFunc(instance, vkCmdEndDebugUtilsLabelEXT);
+    ib_vkCmdBindDescriptorSets2KHR = ib_getVulkanFunc(instance, vkCmdBindDescriptorSets2KHR);
 }
 
-ib_timelineSemaphore ib_allocTimelineSemaphore(ib_Core* core, uint64_t initialValue)
+ib_TimelineSemaphore ib_allocTimelineSemaphore(ib_Core* core, uint64_t initialValue)
 {
-    ib_timelineSemaphore semaphore = {
+    ib_TimelineSemaphore semaphore = {
         .LastSignalValue = initialValue
     };
 
@@ -169,151 +181,36 @@ ib_timelineSemaphore ib_allocTimelineSemaphore(ib_Core* core, uint64_t initialVa
     };
 
     ib_vkCheck(vkCreateSemaphore(core->LogicalDevice, &(VkSemaphoreCreateInfo)
-    {
-        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
-        .pNext = &timelineSemaphoreCreateInfo
-    }, ib_NoVkAllocator, &semaphore.Semaphore));
+                                 {
+                                     .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+                                     .pNext = &timelineSemaphoreCreateInfo
+                                 }, ib_NoVkAllocator, &semaphore.Semaphore));
 
     return semaphore;
 }
 
-void ib_freeTimelineSemaphore(ib_Core* core, ib_timelineSemaphore* semaphore)
+void ib_freeTimelineSemaphore(ib_Core* core, ib_TimelineSemaphore* semaphore)
 {
     vkDestroySemaphore(core->LogicalDevice, semaphore->Semaphore, ib_NoVkAllocator);
 }
 
-void ib_waitTimelineSemaphore(ib_Core* core, ib_timelineSemaphore* semaphore)
+void ib_waitTimelineSemaphore(ib_Core* core, ib_TimelineSemaphore* semaphore)
 {
     vkWaitSemaphores(core->LogicalDevice, &(VkSemaphoreWaitInfo)
-    {
-        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO,
-        .semaphoreCount = 1,
-        .pSemaphores = &semaphore->Semaphore,
-        .pValues = &semaphore->LastSignalValue
-    }, UINT64_MAX);
+                     {
+                         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO,
+                         .semaphoreCount = 1,
+                         .pSemaphores = &semaphore->Semaphore,
+                         .pValues = &semaphore->LastSignalValue
+                     }, UINT64_MAX);
 }
 
 typedef struct StackGpuMemoryPage
 {
-	iba_PageHeader Header;
+    iba_PageHeader Header;
     VkBuffer Buffer;
     iba_GpuAllocation PageAlloc;
 } StackGpuMemoryPage;
-
-// TODO: Replace with page allocator interface
-static iba_PageHeader* allocStagingMemoryPage(void* userData, size_t pageSize)
-{
-	StackGpuMemoryPage* page = calloc(1, sizeof(StackGpuMemoryPage));
-
-	iba_GpuAllocator* generalAllocator = (iba_GpuAllocator*)userData;
-    VkDevice logicalDevice = generalAllocator->LogicalDevice;
-    VkBufferCreateInfo bufferCreate =
-    {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .size = pageSize,
-        .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-    };
-    ib_vkCheck(vkCreateBuffer(logicalDevice, &bufferCreate, ib_NoVkAllocator, &page->Buffer));
-
-    VkMemoryRequirements memoryRequirements;
-    vkGetBufferMemoryRequirements(logicalDevice, page->Buffer, &memoryRequirements);
-
-    page->PageAlloc = iba_gpuAlloc(generalAllocator, (iba_GpuAllocationRequest)
-    {
-        .Size = pageSize,
-        .Alignment = 0,
-        .TypeBits = memoryRequirements.memoryTypeBits,
-        .RequiredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-    });
-
-    ib_vkCheck(vkBindBufferMemory(logicalDevice, page->Buffer, page->PageAlloc.Memory, page->PageAlloc.Offset));
-
-	return &page->Header;
-}
-
-static void freeStagingMemoryPage(void* userData, iba_PageHeader* pageHeader)
-{
-	iba_GpuAllocator* generalAllocator = (iba_GpuAllocator*)userData;
-	StackGpuMemoryPage* page = (StackGpuMemoryPage*)pageHeader;
-
-	vkDestroyBuffer(generalAllocator->LogicalDevice, page->Buffer, ib_NoVkAllocator);
-	iba_gpuFree(generalAllocator, &page->PageAlloc);
-	free(page);
-}
-
-// Staging
-uint32_t const ib_StagingPageSize = 256 * 1024 * 1024; // 256MB of staging space
-void ib_initStaging(ib_StagingDesc desc, ib_Staging* outStaging)
-{
-    *outStaging = (ib_Staging){ 0 };
-    outStaging->LogicalDevice = desc.LogicalDevice;
-
-    iba_initStackAllocator((iba_StackAllocatorDesc)
-        {
-            .PageAllocator =
-			{
-				.AllocPage = &allocStagingMemoryPage,
-				.FreePage = &freeStagingMemoryPage,
-				.UserData = desc.Allocator
-			},
-            .PageSize = ib_StagingPageSize
-        },
-        &outStaging->StackAllocator);
-
-    VkSemaphoreTypeCreateInfo timelineSemaphoreCreateInfo =
-    {
-        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO,
-        .semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE,
-        .initialValue = 0
-    };
-
-    ib_vkCheck(vkCreateSemaphore(desc.LogicalDevice, &(VkSemaphoreCreateInfo)
-		{
-			.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
-            .pNext = &timelineSemaphoreCreateInfo
-		}, ib_NoVkAllocator, &outStaging->TimelineSemaphore));
-
-	vkCreateCommandPool(desc.LogicalDevice, &(VkCommandPoolCreateInfo)
-						{
-							.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-							.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
-                            .queueFamilyIndex = desc.TransferQueueIndex,
-						}, ib_NoVkAllocator, &outStaging->TransferCommandPool);
-
-	VkCommandBufferAllocateInfo commandBufferAllocateInfo =
-	{
-		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-		.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-		.commandBufferCount = MaxTransientStagingCommandBuffers,
-		.commandPool = outStaging->TransferCommandPool,
-	};
-
-	ib_vkCheck(vkAllocateCommandBuffers(desc.LogicalDevice, &commandBufferAllocateInfo, outStaging->TransientCommandBuffers));
-	outStaging->ActiveCommandBuffers = 0;
-}
-
-void ib_killStaging(ib_Staging* staging)
-{
-    iba_killStackAllocator(&staging->StackAllocator);
-	vkDestroyCommandPool(staging->LogicalDevice, staging->TransferCommandPool, ib_NoVkAllocator);
-    vkDestroySemaphore(staging->LogicalDevice, staging->TimelineSemaphore, ib_NoVkAllocator);
-}
-
-ib_StagingBuffer ib_requestStagingBuffer(ib_Staging* staging, ib_StagingRequest request)
-{
-    iba_StackAllocation allocation = iba_stackAlloc(&staging->StackAllocator, (iba_StackAllocationRequest){ request.Size, request.Alignment });
-	StackGpuMemoryPage* page = (StackGpuMemoryPage*)allocation.Page;
-	
-	ib_StagingBuffer stagingBuffer =
-    {
-        .Buffer = page->Buffer,
-        .Memory = page->PageAlloc.CPUMemory + allocation.Offset,
-        .Offset = allocation.Offset,
-        .SemaphoreSignalValue = ++staging->LastSemaphoreSignal,
-    };
-
-    return stagingBuffer;
-}
 
 #ifdef IB_DEBUG
 VkBool32 ib_vkValidationCallback(
@@ -326,23 +223,22 @@ VkBool32 ib_vkValidationCallback(
     ib_potentiallyUnused(messageType);
     ib_potentiallyUnused(pUserData);
 
-    if((messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
-       || (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT))
+    if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
     {
         ib_assert(false, pCallbackData->pMessage);
     }
     else
     {
         char const* prefix = "PRINTF";
-        if(strstr(pCallbackData->pMessage, prefix) != NULL)
+        if (strstr(pCallbackData->pMessage, prefix) != NULL)
         {
             printf("%s\n", pCallbackData->pMessage);
         }
 
-		char const* assertPrefix = "IB_ASSERT";
-        if(strstr(pCallbackData->pMessage, assertPrefix) != NULL)
+        char const* assertPrefix = "IB_ASSERT";
+        if (strstr(pCallbackData->pMessage, assertPrefix) != NULL)
         {
-			ib_assert(false, pCallbackData->pMessage);
+            ib_assert(false, pCallbackData->pMessage);
         }
     }
     return VK_FALSE;
@@ -356,22 +252,25 @@ const char *ib_InstanceExtensions[] = {
     VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
 #endif // IB_DEBUG
 };
-const char *ib_DeviceExtensions[] = 
+const char *ib_DeviceExtensions[] =
 {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME,
     VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
     VK_KHR_PIPELINE_EXECUTABLE_PROPERTIES_EXTENSION_NAME,
     VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME,
+#ifdef IB_DEBUG
+	VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME,
+#endif // IB_DEBUG
 };
 
 const char* ib_RaytracingDeviceExtensions[] =
 {
-	VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME,
+    VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME,
     VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
     VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME,
     VK_KHR_RAY_QUERY_EXTENSION_NAME,
 };
-const char *ib_ValidationLayers[] = {"VK_LAYER_KHRONOS_validation"};
+const char *ib_ValidationLayers[] = { "VK_LAYER_KHRONOS_validation" };
 
 uint32_t const ib_MaxUniformBufferCount = 1000;
 uint32_t const ib_MaxStorageBufferCount = 1000;
@@ -389,7 +288,7 @@ static VkDebugUtilsMessengerEXT ib_VkDebugUtilsMessenger;
 static VkSurfaceKHR ib_createWin32VkSurface(VkInstance vkInstance, void const* windowHandle, void const* instanceHandle);
 void ib_initCore(ib_CoreDesc desc, ib_Core* outCore)
 {
-    *outCore = (ib_Core){ 0 };
+    *outCore = (ib_Core) { 0 };
     // Instance
     {
         VkApplicationInfo appInfo =
@@ -410,7 +309,7 @@ void ib_initCore(ib_CoreDesc desc, ib_Core* outCore)
         {
             .sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT,
             .enabledValidationFeatureCount = printfValidationEnabled ? 1 : 0,
-            .pEnabledValidationFeatures = (VkValidationFeatureEnableEXT[]){VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT}
+            .pEnabledValidationFeatures = (VkValidationFeatureEnableEXT[]) { VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT }
         };
  
         VkInstanceCreateInfo createInfo =
@@ -433,7 +332,7 @@ void ib_initCore(ib_CoreDesc desc, ib_Core* outCore)
     }
 
 #ifdef IB_DEBUG
-    VkDebugUtilsMessengerCreateInfoEXT messengerCreateInfo = 
+    VkDebugUtilsMessengerCreateInfoEXT messengerCreateInfo =
     {
         .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
         .messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
@@ -445,8 +344,8 @@ void ib_initCore(ib_CoreDesc desc, ib_Core* outCore)
 
     // Device
     {
-        #define maxPhysicalDeviceCount 2
-        #define maxPhysicalDeviceProperties 64
+#define maxPhysicalDeviceCount 2
+#define maxPhysicalDeviceProperties 64
 
         uint32_t physicalDeviceCount;
         VkPhysicalDevice physicalDevices[maxPhysicalDeviceCount];
@@ -470,8 +369,8 @@ void ib_initCore(ib_CoreDesc desc, ib_Core* outCore)
             }
         }
 
-        #undef maxPhysicalDeviceCount
-        #undef maxPhysicalDeviceProperties
+#undef maxPhysicalDeviceCount
+#undef maxPhysicalDeviceProperties
 
         // Select the device
         {
@@ -507,7 +406,7 @@ void ib_initCore(ib_CoreDesc desc, ib_Core* outCore)
                     }
                 }
 
-                if(desc.Win32MainWindowHandle != NULL)
+                if (desc.Win32MainWindowHandle != NULL)
                 {
                     // Create a temporary surface based on our main window to select our device.
                     VkSurfaceKHR const temporarySurface = ib_createWin32VkSurface(outCore->Instance, desc.Win32MainWindowHandle, desc.Win32MainInstanceHandle);
@@ -556,38 +455,38 @@ void ib_initCore(ib_CoreDesc desc, ib_Core* outCore)
         }
     }
 
-	outCore->RaytracingEnabled = false;
-	{
-		uint32_t propertyCount;
-		ib_vkCheck(vkEnumerateDeviceExtensionProperties(outCore->PhysicalDevice, NULL, &propertyCount, NULL));
+    outCore->RaytracingEnabled = false;
+    {
+        uint32_t propertyCount;
+        ib_vkCheck(vkEnumerateDeviceExtensionProperties(outCore->PhysicalDevice, NULL, &propertyCount, NULL));
 
-		#define maxPhysicalExtensionCount 256
-		propertyCount = ib_min(maxPhysicalExtensionCount, propertyCount);
-		VkExtensionProperties extensions[maxPhysicalExtensionCount];
-		ib_vkCheck(vkEnumerateDeviceExtensionProperties(outCore->PhysicalDevice, NULL, &propertyCount, extensions));
+#define maxPhysicalExtensionCount 1024
+        propertyCount = ib_min(maxPhysicalExtensionCount, propertyCount);
+        VkExtensionProperties extensions[maxPhysicalExtensionCount];
+        ib_vkCheck(vkEnumerateDeviceExtensionProperties(outCore->PhysicalDevice, NULL, &propertyCount, extensions));
 
-		// Use VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME as a proxy for raytracing
-		for (uint32_t i = 0; i < propertyCount; i++)
-		{
-			if (strcmp(extensions[i].extensionName, VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME) == 0)
-			{
-				outCore->RaytracingEnabled = true;
-				break;
-			}
-		}
-		#undef maxPhysicalExtensionCount
-	}
+        // Use VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME as a proxy for raytracing
+        for (uint32_t i = 0; i < propertyCount; i++)
+        {
+            if (strcmp(extensions[i].extensionName, VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME) == 0)
+            {
+                outCore->RaytracingEnabled = true;
+                break;
+            }
+        }
+#undef maxPhysicalExtensionCount
+    }
 
     // Create the logical device
     {
-        VkDeviceQueueCreateInfo queueCreateInfo[ib_Queue_Count] = {0};
+        VkDeviceQueueCreateInfo queueCreateInfo[ib_Queue_Count] = { 0 };
         uint32_t queueCreateInfoCount = 0;
 
         uint32_t queueCreatedList = 0;
         for (uint32_t i = 0; i < ib_Queue_Count; i++)
         {
             ib_assert(outCore->Queues[i].Index < 32);
-            if(queueCreatedList & (1 << outCore->Queues[i].Index))
+            if (queueCreatedList & (1 << outCore->Queues[i].Index))
             {
                 continue;
             }
@@ -611,21 +510,22 @@ void ib_initCore(ib_CoreDesc desc, ib_Core* outCore)
             .multiDrawIndirect = VK_TRUE,
             .drawIndirectFirstInstance = VK_TRUE,
             .shaderInt64 = VK_TRUE,
-			.dualSrcBlend = VK_TRUE
+            .shaderInt16 = VK_TRUE,
+            .dualSrcBlend = VK_TRUE
         };
 
-		// Intel iGPU doesn't support int64 atomics.
-		// Use 32 bit visibility buffer instead. (Max of 65536 triangles!)
-		//VkPhysicalDeviceShaderImageAtomicInt64FeaturesEXT shaderAtomicFeatures =
-		//{
-		//	.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_IMAGE_ATOMIC_INT64_FEATURES_EXT,
-		//	.shaderImageInt64Atomics = VK_TRUE,
-		//};
+        // Intel iGPU doesn't support int64 atomics.
+        // Use 32 bit visibility buffer instead. (Max of 65536 triangles!)
+        //VkPhysicalDeviceShaderImageAtomicInt64FeaturesEXT shaderAtomicFeatures =
+        //{
+        //	.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_IMAGE_ATOMIC_INT64_FEATURES_EXT,
+        //	.shaderImageInt64Atomics = VK_TRUE,
+        //};
 
-        VkPhysicalDeviceAccelerationStructureFeaturesKHR accelerationStructureFeatures = 
+        VkPhysicalDeviceAccelerationStructureFeaturesKHR accelerationStructureFeatures =
         {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR,
-			// .pNext = &shaderAtomicFeatures,
+            // .pNext = &shaderAtomicFeatures,
             .accelerationStructure = VK_TRUE
         };
 
@@ -654,19 +554,19 @@ void ib_initCore(ib_CoreDesc desc, ib_Core* outCore)
 #endif // IB_DEBUG
         };
 
-		VkPhysicalDeviceVulkan13Features vulkan13Features =
-		{
-			.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
+        VkPhysicalDeviceVulkan13Features vulkan13Features =
+        {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
             .pNext = &pipelinePropertyFeatures,
-			.synchronization2 = VK_TRUE,
+            .synchronization2 = VK_TRUE,
             .dynamicRendering = VK_TRUE,
             .maintenance4 = VK_TRUE,
             .subgroupSizeControl = VK_TRUE,
             .computeFullSubgroups = VK_TRUE,
             .shaderDemoteToHelperInvocation = VK_TRUE
-		};
+        };
 
-        VkPhysicalDeviceVulkan12Features vulkan12Features = 
+        VkPhysicalDeviceVulkan12Features vulkan12Features =
         {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
             .pNext = &vulkan13Features,
@@ -674,31 +574,31 @@ void ib_initCore(ib_CoreDesc desc, ib_Core* outCore)
             .shaderSharedInt64Atomics = VK_FALSE, // Turning off for now. Messes with Renderdoc :(
             .runtimeDescriptorArray = VK_TRUE,
             .timelineSemaphore = VK_TRUE,
-			.shaderSubgroupExtendedTypes = VK_TRUE,
+            .shaderSubgroupExtendedTypes = VK_TRUE,
             .bufferDeviceAddress = VK_TRUE,
-			.hostQueryReset = VK_TRUE,
-			.scalarBlockLayout = VK_TRUE,
+            .hostQueryReset = VK_TRUE,
+            .scalarBlockLayout = VK_TRUE,
             .descriptorBindingPartiallyBound = VK_TRUE
         };
 
-		VkPhysicalDeviceVulkan11Features vulkan11Features =
-		{
-			.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
-			.pNext = &vulkan12Features,
-			.uniformAndStorageBuffer16BitAccess = VK_TRUE,
+        VkPhysicalDeviceVulkan11Features vulkan11Features =
+        {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
+            .pNext = &vulkan12Features,
+            .uniformAndStorageBuffer16BitAccess = VK_TRUE,
             .storageBuffer16BitAccess = VK_TRUE,
-			.shaderDrawParameters = VK_TRUE
-		};
+            .shaderDrawParameters = VK_TRUE
+        };
 
 
-		uint32_t extensionCount = ib_arrayCount(ib_DeviceExtensions);
-		char const* deviceExtensions[ib_arrayCount(ib_DeviceExtensions) + ib_arrayCount(ib_RaytracingDeviceExtensions)];
-		memcpy((void*)deviceExtensions, ib_DeviceExtensions, sizeof(ib_DeviceExtensions));
-		if (outCore->RaytracingEnabled)
-		{
-			memcpy((void*)(deviceExtensions + extensionCount), ib_RaytracingDeviceExtensions, sizeof(ib_RaytracingDeviceExtensions));
-			extensionCount += ib_arrayCount(ib_RaytracingDeviceExtensions);
-		}
+        uint32_t extensionCount = ib_arrayCount(ib_DeviceExtensions);
+        char const* deviceExtensions[ib_arrayCount(ib_DeviceExtensions) + ib_arrayCount(ib_RaytracingDeviceExtensions)];
+        memcpy((void*)deviceExtensions, ib_DeviceExtensions, sizeof(ib_DeviceExtensions));
+        if (outCore->RaytracingEnabled)
+        {
+            memcpy((void*)(deviceExtensions + extensionCount), ib_RaytracingDeviceExtensions, sizeof(ib_RaytracingDeviceExtensions));
+            extensionCount += ib_arrayCount(ib_RaytracingDeviceExtensions);
+        }
 
         VkDeviceCreateInfo deviceCreateInfo =
         {
@@ -730,32 +630,26 @@ void ib_initCore(ib_CoreDesc desc, ib_Core* outCore)
 
     iba_initGpuAllocator(
         (iba_GpuAllocatorDesc) {
-            outCore->PhysicalDevice,
-            outCore->LogicalDevice
-        },
-        &outCore->Allocator);
-
-    ib_initStaging(
-        (ib_StagingDesc){
-            outCore->LogicalDevice,
-            outCore->Queues[ib_Queue_Transfer].Index,
-            &outCore->Allocator,
-        }, &outCore->Staging);
+        outCore->PhysicalDevice,
+        outCore->LogicalDevice,
+        1024 * 1024 * 100 // 100MB max allocation
+    },
+    &outCore->Allocator);
 
     // Create the descriptor pools
     {
-        VkDescriptorPoolSize descriptorPoolSizes[] = 
+        VkDescriptorPoolSize descriptorPoolSizes[] =
         {
-            {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, ib_MaxUniformBufferCount},
-            {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, ib_MaxStorageBufferCount},
-            {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, ib_MaxStorageImageCount},
-            {VK_DESCRIPTOR_TYPE_SAMPLER, ib_MaxImageSamplerCount},
-            {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, ib_MaxSampledImageCount},
-            {VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, ib_MaxAccelerationStructureCount }
+            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, ib_MaxUniformBufferCount },
+            { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, ib_MaxStorageBufferCount },
+            { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, ib_MaxStorageImageCount },
+            { VK_DESCRIPTOR_TYPE_SAMPLER, ib_MaxImageSamplerCount },
+            { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, ib_MaxSampledImageCount },
+            { VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, ib_MaxAccelerationStructureCount }
         };
 
         uint32_t descriptorPoolCount = ib_arrayCount(descriptorPoolSizes);
-        if(!outCore->RaytracingEnabled)
+        if (!outCore->RaytracingEnabled)
         {
             descriptorPoolCount--; // Remove acceleration structure pool
         }
@@ -792,7 +686,7 @@ void ib_initCore(ib_CoreDesc desc, ib_Core* outCore)
 
     // Samplers
     {
-        VkSamplerCreateInfo createInfos[] = 
+        VkSamplerCreateInfo createInfos[] =
         {
             [ib_Sampler_LinearRepeat] =
             {
@@ -829,7 +723,7 @@ void ib_initCore(ib_CoreDesc desc, ib_Core* outCore)
                 .compareOp = VK_COMPARE_OP_LESS,
                 .maxLod = VK_LOD_CLAMP_NONE
             },
-			[ib_Sampler_NearestClamp] =
+            [ib_Sampler_NearestClamp] =
             {
                 .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
                 .magFilter = VK_FILTER_NEAREST,
@@ -840,52 +734,31 @@ void ib_initCore(ib_CoreDesc desc, ib_Core* outCore)
                 .addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
                 .maxLod = VK_LOD_CLAMP_NONE
             },
+            [ib_Sampler_NearestRepeat] =
+            {
+                .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+                .magFilter = VK_FILTER_NEAREST,
+                .minFilter = VK_FILTER_NEAREST,
+                .mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST,
+                .addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                .addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                .addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                .maxLod = VK_LOD_CLAMP_NONE
+            },
         };
 
         // I don't want to create a sampler in every new system, just create common ones here
-        for(uint32_t i = 0; i < ib_Sampler_Count; i++)
+        for (uint32_t i = 0; i < ib_Sampler_Count; i++)
         {
             ib_assert(createInfos[i].sType != 0); // Make sure we initialized all our sampler types
             ib_vkCheck(vkCreateSampler(outCore->LogicalDevice, &createInfos[i], ib_NoVkAllocator, &outCore->Samplers[i]));
         }
     }
-
-    // Default textures
-    {
-        ib_TextureDesc textureDescs[] = 
-        {
-            [ib_DefaultTexture_White] =
-            {
-                .Usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-			    .Format = VK_FORMAT_R8G8B8A8_UNORM,
-			    .Extent = { 1, 1 },
-			    .Aspect = VK_IMAGE_ASPECT_COLOR_BIT,
-			    .InitialWrite = 
-			    {
-                    .Data = (uint8_t[]){ 255, 255, 255, 255 },
-				    .Size = 4
-			    },
-            }
-        };
-
-        // I don't want to create a sampler in every new system, just create common ones here
-        for(uint32_t i = 0; i < ib_DefaultTexture_Count; i++)
-        {
-            outCore->DefaultTextures[i] = ib_allocTexture(outCore, textureDescs[i]);
-        }
-
-        ib_flushStaging(outCore, &outCore->Staging); // Flush our new textures
-    }
 }
 
 void ib_killCore(ib_Core* core)
 {
-    for(uint32_t i = 0; i < ib_DefaultTexture_Count; i++)
-    {
-        ib_freeTexture(core, &core->DefaultTextures[i]);
-    }
-
-    for(uint32_t i = 0; i < ib_Sampler_Count; i++)
+    for (uint32_t i = 0; i < ib_Sampler_Count; i++)
     {
         vkDestroySampler(core->LogicalDevice, core->Samplers[i], ib_NoVkAllocator);
     }
@@ -898,7 +771,6 @@ void ib_killCore(ib_Core* core)
     vkDestroyPipelineCache(core->LogicalDevice, core->PipelineCache, ib_NoVkAllocator);
     vkDestroyDescriptorPool(core->LogicalDevice, core->Descriptors.Pool, ib_NoVkAllocator);
 
-    ib_killStaging(&core->Staging);
     iba_killGpuAllocator(&core->Allocator);
 
     vkDestroyDevice(core->LogicalDevice, ib_NoVkAllocator);
@@ -910,46 +782,31 @@ void ib_killCore(ib_Core* core)
     vkDestroyInstance(core->Instance, ib_NoVkAllocator);
 }
 
-void ib_flushStaging(ib_Core* core, ib_Staging* staging)
-{
-    vkWaitSemaphores(core->LogicalDevice, &(VkSemaphoreWaitInfo)
-    {
-        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO,
-        .semaphoreCount = 1,
-        .pSemaphores = &staging->TimelineSemaphore,
-        .pValues = &staging->LastSemaphoreSignal
-    }, UINT64_MAX);
-
-	vkResetCommandPool(core->LogicalDevice, staging->TransferCommandPool, 0);
-	staging->ActiveCommandBuffers = 0;
-    iba_stackReset(&staging->StackAllocator);
-}
-
 // CommandBuffer
 
 void ib_allocCommandBuffers(ib_Core* core, ib_AllocCommandBuffersDesc desc)
 {
-	VkCommandBufferAllocateInfo commandBufferAllocateInfo =
-	{
-		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-		.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-		.commandBufferCount = desc.OutCommandBuffers.Count,
-		.commandPool = desc.Pool != VK_NULL_HANDLE ? desc.Pool : core->Queues[desc.Queue].CommandPool,
-	};
+    VkCommandBufferAllocateInfo commandBufferAllocateInfo =
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = desc.OutCommandBuffers.Count,
+        .commandPool = desc.Pool != VK_NULL_HANDLE ? desc.Pool : core->Queues[desc.Queue].CommandPool,
+    };
 
-	ib_vkCheck(vkAllocateCommandBuffers(core->LogicalDevice, &commandBufferAllocateInfo, desc.OutCommandBuffers.Data));
+    ib_vkCheck(vkAllocateCommandBuffers(core->LogicalDevice, &commandBufferAllocateInfo, desc.OutCommandBuffers.Data));
 }
 
 VkCommandBuffer ib_allocCommandBuffer(ib_Core* core, ib_AllocCommandBufferDesc desc)
 {
     VkCommandBuffer commandBuffer;
-    ib_allocCommandBuffers(core, 
-        (ib_AllocCommandBuffersDesc)
-        {
-            .Queue = desc.Queue,
-            .Pool = desc.Pool,
-            .OutCommandBuffers = ib_singlePtrRange(&commandBuffer)
-        });
+    ib_allocCommandBuffers(core,
+                           (ib_AllocCommandBuffersDesc)
+                           {
+                               .Queue = desc.Queue,
+                               .Pool = desc.Pool,
+                               .OutCommandBuffers = ib_singlePtrRange(&commandBuffer)
+                           });
     return commandBuffer;
 }
 
@@ -963,15 +820,26 @@ void ib_freeCommandBuffers(ib_Core* core, ib_Queue queue, uint32_t count, VkComm
     vkFreeCommandBuffers(core->LogicalDevice, core->Queues[queue].CommandPool, count, commands);
 }
 
+void ib_beginCommandBuffer(ib_Core* core, VkCommandBuffer commandBuffer)
+{
+    ib_unused(core);
+    ib_vkCheck(vkBeginCommandBuffer(commandBuffer,
+                                    &(VkCommandBufferBeginInfo)
+                                    {
+                                        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+                                        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+                                    }));
+}
+
 VkCommandBuffer ib_allocAndBeginCommandBuffer(ib_Core* core, ib_Queue queue)
 {
-    VkCommandBuffer commandBuffer = ib_allocCommandBuffer(core, (ib_AllocCommandBufferDesc){.Queue = queue});
-	ib_vkCheck(vkBeginCommandBuffer(commandBuffer,
-		&(VkCommandBufferBeginInfo)
-		{
-			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-			.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-		}));
+    VkCommandBuffer commandBuffer = ib_allocCommandBuffer(core, (ib_AllocCommandBufferDesc) { .Queue = queue });
+    ib_vkCheck(vkBeginCommandBuffer(commandBuffer,
+                                    &(VkCommandBufferBeginInfo)
+                                    {
+                                        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+                                        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+                                    }));
 
     return commandBuffer;
 }
@@ -980,28 +848,28 @@ void ib_endAndSubmitCommandBuffer(ib_Core* core, VkCommandBuffer commandBuffer, 
 {
     ib_vkCheck(vkEndCommandBuffer(commandBuffer));
 
-	VkSubmitInfo submitInfo =
-	{
-		.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-		.commandBufferCount = 1,
-		.pCommandBuffers = &commandBuffer,
-	};
-	ib_vkCheck(vkQueueSubmit(core->Queues[queue].Queue, 1, &submitInfo, VK_NULL_HANDLE));
+    VkSubmitInfo submitInfo =
+    {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &commandBuffer,
+    };
+    ib_vkCheck(vkQueueSubmit(core->Queues[queue].Queue, 1, &submitInfo, VK_NULL_HANDLE));
 }
 
 // Texture
 ib_Texture ib_allocTexture(ib_Core* core, ib_TextureDesc desc)
 {
-    ib_Texture texture = 
+    ib_Texture texture =
     {
         .Aspect = desc.Aspect,
-        .Extent = desc.Extent,
+        .Extent = (VkExtent3D) { desc.Extent.width, desc.Extent.height, ib_max(desc.Extent.depth, 1u) },
         .Format = desc.Format,
-		.MipCount = desc.MipCount,
-		.LayerCount = desc.LayerCount
+        .MipCount = desc.MipCount,
+        .LayerCount = desc.LayerCount
     };
 
-	bool is3D = desc.Extent.depth > 1;
+    bool is3D = desc.Extent.depth > 1;
     {
         uint32_t queueFamilyCount = 1;
         uint32_t queueFamilies[3] = { core->Queues[ib_Queue_Graphics].Index };
@@ -1010,27 +878,27 @@ ib_Texture ib_allocTexture(ib_Core* core, ib_TextureDesc desc)
             queueFamilies[queueFamilyCount++] = core->Queues[ib_Queue_Compute].Index;
         }
 
-		if (core->Queues[ib_Queue_Transfer].Index != core->Queues[ib_Queue_Graphics].Index
+        if (core->Queues[ib_Queue_Transfer].Index != core->Queues[ib_Queue_Graphics].Index
             && core->Queues[ib_Queue_Transfer].Index != core->Queues[ib_Queue_Compute].Index)
-		{
-			queueFamilies[queueFamilyCount++] = core->Queues[ib_Queue_Transfer].Index;
-		}
+        {
+            queueFamilies[queueFamilyCount++] = core->Queues[ib_Queue_Transfer].Index;
+        }
 
         VkImageCreateInfo imageCreate =
         {
             .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
             .imageType = is3D ? VK_IMAGE_TYPE_3D : VK_IMAGE_TYPE_2D,
             .format = desc.Format,
-            .extent = {desc.Extent.width, desc.Extent.height, is3D ? desc.Extent.depth : 1 },
+            .extent = { desc.Extent.width, desc.Extent.height, is3D ? desc.Extent.depth : 1 },
             .mipLevels = desc.MipCount > 0 ? desc.MipCount : 1,
             .arrayLayers = desc.LayerCount > 0 ? desc.LayerCount : 1,
             .samples = VK_SAMPLE_COUNT_1_BIT,
             .tiling = VK_IMAGE_TILING_OPTIMAL,
             .usage = desc.Usage,
-            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .initialLayout = desc.InitialLayout,
             .sharingMode = queueFamilyCount > 1 ? VK_SHARING_MODE_CONCURRENT : VK_SHARING_MODE_EXCLUSIVE, // TODO: Investigate making these exclusive and managing queue ownership.
             .queueFamilyIndexCount = queueFamilyCount,
-			.pQueueFamilyIndices = queueFamilies,
+            .pQueueFamilyIndices = queueFamilies,
         };
 
         VkImageFormatProperties properties;
@@ -1057,7 +925,7 @@ ib_Texture ib_allocTexture(ib_Core* core, ib_TextureDesc desc)
         VkMemoryRequirements memoryRequirements;
         vkGetImageMemoryRequirements(core->LogicalDevice, texture.Image, &memoryRequirements);
 
-        iba_GpuAllocationRequest request = 
+        iba_GpuAllocationRequest request =
         {
             .Alignment = memoryRequirements.alignment,
             .Size = memoryRequirements.size,
@@ -1074,17 +942,17 @@ ib_Texture ib_allocTexture(ib_Core* core, ib_TextureDesc desc)
 
     // Image view
     {
-		VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D;
-		if (is3D)
-		{
-			ib_assert(desc.LayerCount <= 1);
-			viewType = VK_IMAGE_VIEW_TYPE_3D;
-		}
-		else if (desc.LayerCount > 1)
-		{
-			ib_assert(!is3D);
-			viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
-		}
+        VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D;
+        if (is3D)
+        {
+            ib_assert(desc.LayerCount <= 1);
+            viewType = VK_IMAGE_VIEW_TYPE_3D;
+        }
+        else if (desc.LayerCount > 1)
+        {
+            ib_assert(!is3D);
+            viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+        }
 
         VkImageViewCreateInfo imageCreateViewInfo =
         {
@@ -1092,8 +960,8 @@ ib_Texture ib_allocTexture(ib_Core* core, ib_TextureDesc desc)
             .image = texture.Image,
             .viewType = viewType,
             .format = desc.Format,
-            .components = {VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A},
-            .subresourceRange = 
+            .components = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A },
+            .subresourceRange =
             {
                 .aspectMask = desc.Aspect,
                 .levelCount = 1,
@@ -1116,141 +984,17 @@ ib_Texture ib_allocTexture(ib_Core* core, ib_TextureDesc desc)
             ib_vkCheck(vkSetDebugUtilsObjectNameEXT(core->LogicalDevice, &imageViewDebugNameInfo));
         }
     }
-
-    if(desc.InitialWrite.Data != NULL)
-    {
-        ib_assert(desc.InitialWrite.Size != 0);
-        ib_writeToTexture(core, (ib_WriteToTextureDesc)
-        {
-            .Texture = &texture,
-            .Data = desc.InitialWrite.Data,
-            .Size = desc.InitialWrite.Size,
-            .Alignment = desc.InitialWrite.Alignment
-        });
-    }
-
     return texture;
 }
 
 void ib_freeTexture(ib_Core* core, ib_Texture* texture)
 {
-    if(texture->Image != VK_NULL_HANDLE)
+    if (texture->Image != VK_NULL_HANDLE)
     {
         vkDestroyImage(core->LogicalDevice, texture->Image, ib_NoVkAllocator);
         vkDestroyImageView(core->LogicalDevice, texture->View, ib_NoVkAllocator);
         iba_gpuFree(&core->Allocator, &texture->Allocation);
     }
-}
-
-void ib_writeToTexture(ib_Core* core, ib_WriteToTextureDesc desc)
-{
-    if(desc.Alignment == 0)
-    {
-        desc.Alignment = ib_formatToSize(desc.Texture->Format);
-    }
-
-    ib_StagingBuffer stagingBuffer = ib_requestStagingBuffer(&core->Staging, (ib_StagingRequest){ desc.Size, desc.Alignment });
-    memcpy(stagingBuffer.Memory, desc.Data, desc.Size);
-
-	ib_assert(core->Staging.ActiveCommandBuffers < MaxTransientStagingCommandBuffers);
-	VkCommandBuffer commandBuffer = core->Staging.TransientCommandBuffers[core->Staging.ActiveCommandBuffers++];
-    VkCommandBufferBeginInfo beginBufferInfo =
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-    };
-    ib_vkCheck(vkBeginCommandBuffer(commandBuffer, &beginBufferInfo));
-
-    // Image barrier UNDEFINED -> TRANSFER
-    {
-        VkImageMemoryBarrier2 imageBarrier = ib_createTextureBarrier(core, 
-            (ib_TextureBarrierDesc)
-            {
-                .Texture = desc.Texture,
-                .SourceAccessMask = (VkAccessFlags){0},
-                .DestAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-                .OldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-                .NewLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                .SourceStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-                .DestStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT
-            });
-
-        vkCmdPipelineBarrier2(commandBuffer, &(VkDependencyInfo)
-        {
-            .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
-            .imageMemoryBarrierCount = 1,
-            .pImageMemoryBarriers = &imageBarrier
-        });
-    }
-
-    // Image copy
-    {
-        VkBufferImageCopy copyRegion =
-        {
-            .bufferOffset = stagingBuffer.Offset,
-            .bufferRowLength = 0,
-            .bufferImageHeight = 0,
-            .imageSubresource =
-            {
-                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                .mipLevel = 0,
-                .baseArrayLayer = 0,
-                .layerCount = desc.Texture->LayerCount > 0 ? desc.Texture->LayerCount : 1,
-            },
-            .imageOffset = { 0 },
-            .imageExtent =
-            {
-                .width = desc.Texture->Extent.width,
-                .height = desc.Texture->Extent.height,
-                .depth = 1,
-            },
-        };
-
-        vkCmdCopyBufferToImage(commandBuffer, stagingBuffer.Buffer, desc.Texture->Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
-    }
-
-    // Image barrier TRANSFER -> SHADER_READ_BIT
-    {
-        VkImageMemoryBarrier2 imageBarrier = ib_createTextureBarrier(core,
-            (ib_TextureBarrierDesc)
-            {
-                .Texture = desc.Texture,
-                .SourceAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-                .DestAccessMask = (VkAccessFlags){0},
-                .OldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                .NewLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                .SourceStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT,
-                .DestStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT
-            });
-        vkCmdPipelineBarrier2(commandBuffer, &(VkDependencyInfo)
-        {
-            .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
-            .imageMemoryBarrierCount = 1,
-            .pImageMemoryBarriers = &imageBarrier
-        });
-    }
-
-    ib_vkCheck(vkEndCommandBuffer(commandBuffer));
-
-    VkSubmitInfo2 submitInfo =
-    {
-		.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
-		.commandBufferInfoCount = 1,
-		.pCommandBufferInfos = &(VkCommandBufferSubmitInfo)
-		{
-			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
-			.commandBuffer = commandBuffer
-		},
-		.signalSemaphoreInfoCount = 1,
-		.pSignalSemaphoreInfos = &(VkSemaphoreSubmitInfo)
-		{
-			.sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
-			.semaphore = core->Staging.TimelineSemaphore,
-			.value = stagingBuffer.SemaphoreSignalValue,
-			.stageMask = VK_PIPELINE_STAGE_TRANSFER_BIT
-		}
-    };
-    ib_vkCheck(vkQueueSubmit2(core->Queues[ib_Queue_Transfer].Queue, 1, &submitInfo, VK_NULL_HANDLE));
 }
 
 VkImageMemoryBarrier2 ib_createTextureBarrier(ib_Core* core, ib_TextureBarrierDesc desc)
@@ -1265,31 +1009,31 @@ VkImageMemoryBarrier2 ib_createTextureBarrier(ib_Core* core, ib_TextureBarrierDe
     }
 
     return (VkImageMemoryBarrier2)
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+        .oldLayout = desc.OldLayout,
+        .newLayout = desc.NewLayout,
+        .srcQueueFamilyIndex = srcQueue,
+        .dstQueueFamilyIndex = destQueue,
+        .srcStageMask = desc.SourceStageMask,
+        .dstStageMask = desc.DestStageMask,
+        .image = desc.Texture->Image,
+        .subresourceRange =
         {
-            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
-            .oldLayout = desc.OldLayout,
-            .newLayout = desc.NewLayout,
-            .srcQueueFamilyIndex = srcQueue,
-            .dstQueueFamilyIndex = destQueue,
-            .srcStageMask = desc.SourceStageMask,
-            .dstStageMask = desc.DestStageMask,
-            .image = desc.Texture->Image,
-            .subresourceRange = 
-            {
-                .aspectMask = desc.Texture->Aspect,
-                .levelCount = VK_REMAINING_MIP_LEVELS,
-                .baseMipLevel = 0,
-                .baseArrayLayer = 0,
-                .layerCount = VK_REMAINING_ARRAY_LAYERS
-            },
-            .srcAccessMask = desc.SourceAccessMask,
-            .dstAccessMask = desc.DestAccessMask,
-        };
+            .aspectMask = desc.Texture->Aspect,
+            .levelCount = VK_REMAINING_MIP_LEVELS,
+            .baseMipLevel = 0,
+            .baseArrayLayer = 0,
+            .layerCount = VK_REMAINING_ARRAY_LAYERS
+        },
+        .srcAccessMask = desc.SourceAccessMask,
+        .dstAccessMask = desc.DestAccessMask,
+    };
 }
 
 uint32_t ib_formatToSize(VkFormat format)
 {
-    static uint32_t const sizes[] = 
+    static uint32_t const sizes[] =
     {
         // 8bit Size 1
         [VK_FORMAT_R8_UNORM] = 1, [VK_FORMAT_R8_SNORM] = 1, [VK_FORMAT_R8_USCALED] = 1,
@@ -1321,8 +1065,8 @@ uint32_t ib_formatToSize(VkFormat format)
         [VK_FORMAT_A2B10G10R10_UNORM_PACK32] = 4, [VK_FORMAT_A2B10G10R10_SNORM_PACK32] = 4, [VK_FORMAT_A2B10G10R10_USCALED_PACK32] = 4,
         [VK_FORMAT_A2B10G10R10_SSCALED_PACK32] = 4, [VK_FORMAT_A2B10G10R10_UINT_PACK32] = 4, [VK_FORMAT_A2B10G10R10_SINT_PACK32] = 4,
         
-		// R11G11B10
-		[VK_FORMAT_B10G11R11_UFLOAT_PACK32] = 4,
+        // R11G11B10
+        [VK_FORMAT_B10G11R11_UFLOAT_PACK32] = 4,
 
         // 16bit, Size 2
         [VK_FORMAT_R16_UNORM] = 2, [VK_FORMAT_R16_SNORM] = 2, [VK_FORMAT_R16_USCALED] = 2,
@@ -1360,9 +1104,9 @@ uint32_t ib_formatToSize(VkFormat format)
 ib_Buffer ib_allocBuffer(ib_Core* core, ib_BufferDesc desc)
 {
     ib_Buffer buffer = { 0 };
-	buffer.Size = desc.Size;
+    buffer.Size = desc.Size;
 
-	VkBufferUsageFlags const finalUsage = desc.Usage | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+    VkBufferUsageFlags const finalUsage = desc.Usage | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
     VkBufferCreateInfo bufferCreate =
     {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
@@ -1386,39 +1130,27 @@ ib_Buffer ib_allocBuffer(ib_Core* core, ib_BufferDesc desc)
     VkMemoryRequirements memoryRequirements;
     vkGetBufferMemoryRequirements(core->LogicalDevice, buffer.VulkanBuffer, &memoryRequirements);
 
-    iba_GpuAllocationRequest request = 
+    iba_GpuAllocationRequest request =
     {
         .Alignment = memoryRequirements.alignment,
         .Size = memoryRequirements.size,
         .RequiredFlags = desc.RequiredMemoryFlags,
         .PreferredFlags = desc.PreferredMemoryFlags,
         .TypeBits = memoryRequirements.memoryTypeBits,
+        .AllocationType = desc.AllocationType
     };
 
     buffer.Allocation = iba_gpuAlloc(&core->Allocator, request);
     ib_vkCheck(vkBindBufferMemory(core->LogicalDevice, buffer.VulkanBuffer, buffer.Allocation.Memory, buffer.Allocation.Offset));
 
-	if (finalUsage & VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT)
-	{
-		VkBufferDeviceAddressInfo addressQueryInfo = {
-			.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
-			.buffer = buffer.VulkanBuffer,
-		};
-
-		buffer.DeviceAddress = vkGetBufferDeviceAddressKHR(core->LogicalDevice, &addressQueryInfo);
-	}
-    
-    if(desc.InitialWrite.Data != NULL)
+    if (finalUsage & VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT)
     {
-        ib_assert(desc.InitialWrite.Size != 0);
-        ib_writeToBuffer(core, (ib_WriteToBufferDesc)
-        {
-            .Buffer = &buffer,
-            .Data = desc.InitialWrite.Data,
-            .Size = desc.InitialWrite.Size == VK_WHOLE_SIZE ? desc.Size : desc.InitialWrite.Size,
-            .Alignment = desc.InitialWrite.Alignment,
-            .WriteOffset = desc.InitialWrite.WriteOffset
-        });
+        VkBufferDeviceAddressInfo addressQueryInfo = {
+            .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
+            .buffer = buffer.VulkanBuffer,
+        };
+
+        buffer.DeviceAddress = vkGetBufferDeviceAddressKHR(core->LogicalDevice, &addressQueryInfo);
     }
 
     return buffer;
@@ -1428,60 +1160,6 @@ void ib_freeBuffer(ib_Core* core, ib_Buffer* buffer)
 {
     vkDestroyBuffer(core->LogicalDevice, buffer->VulkanBuffer, ib_NoVkAllocator);
     iba_gpuFree(&core->Allocator, &buffer->Allocation);
-}
-
-void ib_writeToBuffer(ib_Core* core, ib_WriteToBufferDesc desc)
-{
-    // Don't bother staging if we can just write to our memory directly.
-    if(desc.Buffer->Allocation.CPUMemory != NULL)
-    {
-        memcpy(desc.Buffer->Allocation.CPUMemory + desc.WriteOffset, desc.Data, desc.Size);
-    }
-    else
-    {
-        ib_StagingBuffer staging = ib_requestStagingBuffer(&core->Staging, (ib_StagingRequest){ desc.Size, desc.Alignment });
-        memcpy(staging.Memory, desc.Data, desc.Size);
-
-        ib_assert(core->Staging.ActiveCommandBuffers < MaxTransientStagingCommandBuffers);
-		VkCommandBuffer commandBuffer = core->Staging.TransientCommandBuffers[core->Staging.ActiveCommandBuffers++];
-        VkCommandBufferBeginInfo beginBufferInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-            .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-        };
-        ib_vkCheck(vkBeginCommandBuffer(commandBuffer, &beginBufferInfo));
-
-        VkBufferCopy copy =
-        {
-            .srcOffset = staging.Offset,
-            .dstOffset = desc.WriteOffset,
-            .size = desc.Size,
-        };
-        vkCmdCopyBuffer(commandBuffer, staging.Buffer, desc.Buffer->VulkanBuffer, 1, &copy);
-
-        ib_vkCheck(vkEndCommandBuffer(commandBuffer));
-
-		VkSubmitInfo2 submitInfo =
-		{
-			.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
-			.commandBufferInfoCount = 1,
-			.pCommandBufferInfos = &(VkCommandBufferSubmitInfo)
-			{
-				.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
-				.commandBuffer = commandBuffer
-			},
-			.signalSemaphoreInfoCount = 1,
-			.pSignalSemaphoreInfos = &(VkSemaphoreSubmitInfo)
-			{
-				.sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
-				.semaphore = core->Staging.TimelineSemaphore,
-				.value = staging.SemaphoreSignalValue,
-				.stageMask = VK_PIPELINE_STAGE_TRANSFER_BIT
-			}
-		};
-
-        ib_vkCheck(vkQueueSubmit2(core->Queues[ib_Queue_Transfer].Queue, 1, &submitInfo, VK_NULL_HANDLE));
-    }
 }
 
 // Surface
@@ -1519,7 +1197,7 @@ static void ib_buildSwapchain(ib_Core* core, ib_Surface* surface)
         .surface = surface->VulkanSurface,
         .imageFormat = surface->Format.format,
         .imageColorSpace = surface->Format.colorSpace,
-        .imageExtent = (VkExtent2D) { surface->Extent.width, surface->Extent.height},
+        .imageExtent = (VkExtent2D) { surface->Extent.width, surface->Extent.height },
         .preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
         .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
         .presentMode = surface->PresentMode,
@@ -1527,7 +1205,7 @@ static void ib_buildSwapchain(ib_Core* core, ib_Surface* surface)
         .oldSwapchain = surface->Swapchain,
     };
 
-    if(swapchainCreate.imageFormat != VK_FORMAT_R8G8B8A8_SRGB)
+    if (swapchainCreate.imageFormat != VK_FORMAT_R8G8B8A8_SRGB)
     {
         swapchainCreate.imageUsage |= VK_IMAGE_USAGE_STORAGE_BIT;
     }
@@ -1575,7 +1253,7 @@ static void ib_buildSwapchain(ib_Core* core, ib_Surface* surface)
 
         surface->SwapchainTextures[fb].Aspect = VK_IMAGE_ASPECT_COLOR_BIT;
         surface->SwapchainTextures[fb].Image = swapchainImages[fb];
-        surface->SwapchainTextures[fb].Extent = (VkExtent3D){ surface->Extent.width, surface->Extent.height };
+        surface->SwapchainTextures[fb].Extent = (VkExtent3D) { surface->Extent.width, surface->Extent.height };
         surface->SwapchainTextures[fb].Format = surface->Format.format;
         ib_vkCheck(vkCreateImageView(core->LogicalDevice, &imageViewCreate, ib_NoVkAllocator, &surface->SwapchainTextures[fb].View));
     }
@@ -1593,14 +1271,14 @@ ib_Surface ib_allocWin32Surface(ib_Core* core, ib_SurfaceDesc desc)
         ib_vkCheck(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(core->PhysicalDevice, surface.VulkanSurface, &surfaceCapabilities));
 
         ib_assert(surfaceCapabilities.currentExtent.width != UINT32_MAX, "Surface has invalid width.");
-        surface.Extent = (VkExtent3D){ surfaceCapabilities.currentExtent.width, surfaceCapabilities.currentExtent.height, 0 };
+        surface.Extent = (VkExtent3D) { surfaceCapabilities.currentExtent.width, surfaceCapabilities.currentExtent.height, 0 };
     }
 
     // Present mode
     surface.PresentMode = VK_PRESENT_MODE_FIFO_KHR;
     if (!desc.UseVSync)
     {
-        #define maxPresentModes 32
+#define maxPresentModes 32
         uint32_t presentModeCount;
         VkPresentModeKHR presentModes[maxPresentModes];
 
@@ -1608,7 +1286,7 @@ ib_Surface ib_allocWin32Surface(ib_Core* core, ib_SurfaceDesc desc)
         ib_assert(presentModeCount > 0, "Failed to find a present mode.");
         presentModeCount = presentModeCount < maxPresentModes ? presentModeCount : maxPresentModes;
         ib_vkCheck(vkGetPhysicalDeviceSurfacePresentModesKHR(core->PhysicalDevice, surface.VulkanSurface, &presentModeCount, presentModes));
-        #undef maxPresentModes
+#undef maxPresentModes
 
         for (uint32_t i = 0; i < presentModeCount; i++)
         {
@@ -1622,7 +1300,7 @@ ib_Surface ib_allocWin32Surface(ib_Core* core, ib_SurfaceDesc desc)
 
     // Surface format
     {
-        #define maxSurfaceFormatCount 32
+#define maxSurfaceFormatCount 32
         uint32_t surfaceFormatCount;
         VkSurfaceFormatKHR surfaceFormats[maxSurfaceFormatCount];
 
@@ -1630,7 +1308,7 @@ ib_Surface ib_allocWin32Surface(ib_Core* core, ib_SurfaceDesc desc)
         ib_assert(surfaceFormatCount > 0, "Failed to find any surface formats.");
         surfaceFormatCount = surfaceFormatCount < maxSurfaceFormatCount ? surfaceFormatCount : maxSurfaceFormatCount;
         ib_vkCheck(vkGetPhysicalDeviceSurfaceFormatsKHR(core->PhysicalDevice, surface.VulkanSurface, &surfaceFormatCount, surfaceFormats));
-        #undef maxSurfaceFormatCount
+#undef maxSurfaceFormatCount
 
         VkFormat targetFormat = desc.SRGB ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM;
 
@@ -1662,6 +1340,7 @@ ib_Surface ib_allocWin32Surface(ib_Core* core, ib_SurfaceDesc desc)
         for (uint32_t i = 0; i < ib_FramebufferCount; i++)
         {
             ib_vkCheck(vkCreateSemaphore(core->LogicalDevice, &semaphoreCreateInfo, ib_NoVkAllocator, &surface.Framebuffers[i].AcquireSemaphore));
+            ib_vkCheck(vkCreateSemaphore(core->LogicalDevice, &semaphoreCreateInfo, ib_NoVkAllocator, &surface.PresentSemaphores[i]));
         }
     }
 
@@ -1673,6 +1352,7 @@ void ib_freeSurface(ib_Core* core, ib_Surface* surface)
     for (uint32_t fb = 0; fb < ib_FramebufferCount; fb++)
     {
         vkDestroySemaphore(core->LogicalDevice, surface->Framebuffers[fb].AcquireSemaphore, ib_NoVkAllocator);
+        vkDestroySemaphore(core->LogicalDevice, surface->PresentSemaphores[fb], ib_NoVkAllocator);
         vkDestroyImageView(core->LogicalDevice, surface->SwapchainTextures[fb].View, ib_NoVkAllocator);
     }
     vkDestroySwapchainKHR(core->LogicalDevice, surface->Swapchain, ib_NoVkAllocator);
@@ -1688,7 +1368,7 @@ ib_PrepareSurfaceResult ib_prepareSurface(ib_Core* core, ib_PrepareSurfaceDesc p
     uint64_t acquireTimeout = 100000000; // 100ms
     VkResult acquireResult = vkAcquireNextImageKHR(core->LogicalDevice, prepareDesc.Surface->Swapchain, acquireTimeout, acquireSemaphore, VK_NULL_HANDLE, &prepareResult.SwapchainTextureIndex);
         
-    if(acquireResult != VK_SUCCESS && acquireResult != VK_SUBOPTIMAL_KHR)
+    if (acquireResult != VK_SUCCESS && acquireResult != VK_SUBOPTIMAL_KHR)
     {
         if (acquireResult == VK_ERROR_OUT_OF_DATE_KHR)
         {
@@ -1733,7 +1413,7 @@ void ib_rebuildSurface(ib_Core* core, ib_Surface* surface)
     ib_vkCheck(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(core->PhysicalDevice, surface->VulkanSurface, &surfaceCapabilities));
     ib_assert(surfaceCapabilities.currentExtent.width != UINT32_MAX, "Surface extents are undefined.");
     
-    if(surfaceCapabilities.currentExtent.width > 0 && surfaceCapabilities.currentExtent.height > 0)
+    if (surfaceCapabilities.currentExtent.width > 0 && surfaceCapabilities.currentExtent.height > 0)
     {
         surface->Extent = (VkExtent3D) { surfaceCapabilities.currentExtent.width, surfaceCapabilities.currentExtent.height };
         ib_buildSwapchain(core, surface);
@@ -1753,7 +1433,7 @@ ib_ShaderInputLayout ib_allocShaderInputLayout(ib_Core* core, ib_ShaderInputLayo
     VkDescriptorSetLayoutBinding bindings[maxShaderInputPerBlock] = { 0 };
     VkDescriptorBindingFlagsEXT bindFlags[maxShaderInputPerBlock] = { 0 };
 #undef maxShaderInputPerBlock
-    for(uint32_t i = 0; i < blockLayoutDesc.Inputs.Count; i++)
+    for (uint32_t i = 0; i < blockLayoutDesc.Inputs.Count; i++)
     {
         ib_ShaderInputDesc inputDesc = blockLayoutDesc.Inputs.Data[i];
 
@@ -1761,7 +1441,7 @@ ib_ShaderInputLayout ib_allocShaderInputLayout(ib_Core* core, ib_ShaderInputLayo
         bindings[i].binding = i;
         bindings[i].descriptorType = inputDesc.Type;
 
-        if(inputDesc.UseImmutableSamplers)
+        if (inputDesc.UseImmutableSamplers)
         {
             ib_assert(bindings[i].descriptorType == VK_DESCRIPTOR_TYPE_SAMPLER);
             bindings[i].descriptorCount = ib_Sampler_Count;
@@ -1815,13 +1495,13 @@ ib_ShaderInput ib_allocShaderInput(ib_Core* core, ib_AllocShaderInputDesc allocD
     ib_vkCheck(vkAllocateDescriptorSets(core->LogicalDevice, &descriptorSetAlloc, &block.DescriptorSet));
 
     ib_assert(allocDesc.Inputs.Data == NULL || allocDesc.Inputs.Count > 0);
-    if(allocDesc.Inputs.Count > 0)
+    if (allocDesc.Inputs.Count > 0)
     {
         ib_writeToShaderInput(core, (ib_WriteToShaderInputDesc)
-        {
-            &block,
-            { allocDesc.Inputs.Data, allocDesc.Inputs.Count }
-        });
+                              {
+                                  &block,
+                                  { allocDesc.Inputs.Data, allocDesc.Inputs.Count }
+                              });
     }
 
     return block;
@@ -1834,7 +1514,7 @@ void ib_freeShaderInput(ib_Core* core, ib_ShaderInput* input)
 
 enum
 {
-	ib_ShaderInputWriteType_None = 0,
+    ib_ShaderInputWriteType_None = 0,
     ib_ShaderInputWriteType_Buffer,
     ib_ShaderInputWriteType_Texture,
     ib_ShaderInputWriteType_Sampler,
@@ -1843,23 +1523,23 @@ enum
 
 static uint32_t getShaderInputType(ib_ShaderInputWrite const* input)
 {
-	uint32_t shaderInputType = ib_ShaderInputWriteType_None;
-	if (input->BufferInput.Buffer != NULL)
-	{
-		shaderInputType = ib_ShaderInputWriteType_Buffer;
-	}
+    uint32_t shaderInputType = ib_ShaderInputWriteType_None;
+    if (input->BufferInput.Buffer != NULL)
+    {
+        shaderInputType = ib_ShaderInputWriteType_Buffer;
+    }
 
-	if (input->TextureInput.Texture != NULL)
-	{
-		ib_assert(shaderInputType == ib_ShaderInputWriteType_None);
-		shaderInputType = ib_ShaderInputWriteType_Texture;
-	}
+    if (input->TextureInput.Texture != NULL)
+    {
+        ib_assert(shaderInputType == ib_ShaderInputWriteType_None);
+        shaderInputType = ib_ShaderInputWriteType_Texture;
+    }
 
-	if (input->SamplerInput != VK_NULL_HANDLE)
-	{
-		ib_assert(shaderInputType == ib_ShaderInputWriteType_None);
-		shaderInputType = ib_ShaderInputWriteType_Sampler;
-	}
+    if (input->SamplerInput != VK_NULL_HANDLE)
+    {
+        ib_assert(shaderInputType == ib_ShaderInputWriteType_None);
+        shaderInputType = ib_ShaderInputWriteType_Sampler;
+    }
 
     if (input->AccelerationStructureInput != VK_NULL_HANDLE)
     {
@@ -1867,8 +1547,8 @@ static uint32_t getShaderInputType(ib_ShaderInputWrite const* input)
         shaderInputType = ib_ShaderInputWriteType_AccelerationStructure;
     }
 
-	ib_assert(shaderInputType != ib_ShaderInputWriteType_None);
-	return shaderInputType;
+    ib_assert(shaderInputType != ib_ShaderInputWriteType_None);
+    return shaderInputType;
 }
 
 void ib_writeToShaderInput(ib_Core* core, ib_WriteToShaderInputDesc desc)
@@ -1889,20 +1569,20 @@ void ib_writeToShaderInput(ib_Core* core, ib_WriteToShaderInputDesc desc)
     VkWriteDescriptorSetAccelerationStructureKHR accelerationStructureWrites[maxWritesPerCall] = { 0 };
 #undef maxWritesPerCall
 
-    for(uint32_t i = 0; i < desc.Inputs.Count; i++)
+    for (uint32_t i = 0; i < desc.Inputs.Count; i++)
     {
         writes[i] = (VkWriteDescriptorSet)
         {
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             .dstSet = desc.ShaderInput->DescriptorSet,
             .descriptorType = desc.Inputs.Data[i].Desc->Type,
-            .dstBinding = desc.Inputs.Data[i].Desc->Index,
+            .dstBinding = desc.Inputs.Data[i].BindingIndex,
             .descriptorCount = 1, // TODO: Support multiple array writes
-			.dstArrayElement = desc.Inputs.Data[i].ArrayIndex
+            .dstArrayElement = desc.Inputs.Data[i].ArrayIndex
         };
 
-		uint32_t type = getShaderInputType(&desc.Inputs.Data[i]);
-        if(type == ib_ShaderInputWriteType_Buffer)
+        uint32_t type = getShaderInputType(&desc.Inputs.Data[i]);
+        if (type == ib_ShaderInputWriteType_Buffer)
         {
             VkDeviceSize bufferOffset = desc.Inputs.Data[i].BufferInput.Offset;
             VkDeviceSize bufferRange = desc.Inputs.Data[i].BufferInput.Size != 0 ? desc.Inputs.Data[i].BufferInput.Size : VK_WHOLE_SIZE;
@@ -1916,18 +1596,18 @@ void ib_writeToShaderInput(ib_Core* core, ib_WriteToShaderInputDesc desc)
             writes[i].pBufferInfo = &bufferWrites[bufferWriteCount];
             bufferWriteCount++;
         }
-        else if(type == ib_ShaderInputWriteType_Texture)
+        else if (type == ib_ShaderInputWriteType_Texture)
         {
             imageWrites[imageWriteCount] = (VkDescriptorImageInfo)
             {
-				// Allow users to feed a custom image view
+                // Allow users to feed a custom image view
                 .imageView = desc.Inputs.Data[i].TextureInput.View != VK_NULL_HANDLE ? desc.Inputs.Data[i].TextureInput.View : desc.Inputs.Data[i].TextureInput.Texture->View,
                 .imageLayout = desc.Inputs.Data[i].TextureInput.Layout
             };
             writes[i].pImageInfo = &imageWrites[imageWriteCount];
             imageWriteCount++;
         }
-        else if(type == ib_ShaderInputWriteType_Sampler)
+        else if (type == ib_ShaderInputWriteType_Sampler)
         {
             ib_assert(!desc.Inputs.Data[i].Desc->UseImmutableSamplers);
             imageWrites[imageWriteCount] = (VkDescriptorImageInfo)
@@ -1962,35 +1642,35 @@ ib_GraphicsPipeline ib_allocGraphicsPipeline(ib_Core* core, ib_GraphicsPipelineD
     ib_GraphicsPipeline graphicsPipeline = { 0 };
 
     // Pipeline layout
-	VkDescriptorSetLayout layouts[ib_MaxShaderInputLayoutPerPipeline] = { 0 };
-	uint32_t layoutCount = 0;
-	for (uint32_t i = 0; i < ib_MaxShaderInputLayoutPerPipeline; i++)
-	{
-		ib_PipelineShaderInputDesc const* input = &desc.ShaderInputs[i];
-		if (input->Inline.Count > 0)
-		{
-			uint32_t inlineCount = graphicsPipeline.InlineShaderInputLayoutCount++;
-			graphicsPipeline.InlineShaderInputLayouts[inlineCount] = ib_allocShaderInputLayout(core, (ib_ShaderInputLayoutDesc) { input->Inline });
-			layouts[i] = graphicsPipeline.InlineShaderInputLayouts[inlineCount].DescriptorSetLayout;
-		}
-		else if(input->External != NULL)
-		{
-			layouts[i] = input->External->DescriptorSetLayout;
-		}
-		else
-		{
-			break; // No more shader inputs.
-		}
+    VkDescriptorSetLayout layouts[ib_MaxShaderInputLayoutPerPipeline] = { 0 };
+    uint32_t layoutCount = 0;
+    for (uint32_t i = 0; i < ib_MaxShaderInputLayoutPerPipeline; i++)
+    {
+        ib_PipelineShaderInputDesc const* input = &desc.ShaderInputs[i];
+        if (input->Inline.Count > 0)
+        {
+            uint32_t inlineCount = graphicsPipeline.InlineShaderInputLayoutCount++;
+            graphicsPipeline.InlineShaderInputLayouts[inlineCount] = ib_allocShaderInputLayout(core, (ib_ShaderInputLayoutDesc) { input->Inline });
+            layouts[i] = graphicsPipeline.InlineShaderInputLayouts[inlineCount].DescriptorSetLayout;
+        }
+        else if (input->External != NULL)
+        {
+            layouts[i] = input->External->DescriptorSetLayout;
+        }
+        else
+        {
+            break; // No more shader inputs.
+        }
 
-		layoutCount++;
-	}
+        layoutCount++;
+    }
 
 #ifdef IB_DEBUG
-	for (uint32_t i = layoutCount; i < ib_MaxShaderInputLayoutPerPipeline; i++)
-	{
-		ib_PipelineShaderInputDesc const* input = &desc.ShaderInputs[i];
-		ib_assert(input->Inline.Count == 0 && input->External == NULL); // This suggests we had a gap between shader inputs. This is not allowed.
-	}
+    for (uint32_t i = layoutCount; i < ib_MaxShaderInputLayoutPerPipeline; i++)
+    {
+        ib_PipelineShaderInputDesc const* input = &desc.ShaderInputs[i];
+        ib_assert(input->Inline.Count == 0 && input->External == NULL); // This suggests we had a gap between shader inputs. This is not allowed.
+    }
 #endif // IB_DEBUG
 
     ib_assert(desc.PushConstants.Data == NULL || desc.PushConstants.Count > 0);
@@ -2025,7 +1705,7 @@ ib_GraphicsPipeline ib_allocGraphicsPipeline(ib_Core* core, ib_GraphicsPipelineD
 #undef maxShaderCount
 
     {
-        for(uint32_t i = 0; i < desc.ShaderDescs.Count; i++)
+        for (uint32_t i = 0; i < desc.ShaderDescs.Count; i++)
         {
             VkShaderModuleCreateInfo createShader =
             {
@@ -2062,7 +1742,7 @@ ib_GraphicsPipeline ib_allocGraphicsPipeline(ib_Core* core, ib_GraphicsPipelineD
     VkFormat colorFormats[maxRenderTargetCount] = { 0 };
 #undef maxRenderTargetCount
 
-    for(uint32_t i = 0; i < desc.RenderTargetDescs.Count; i++)
+    for (uint32_t i = 0; i < desc.RenderTargetDescs.Count; i++)
     {
         colorBlendAttachments[i] = desc.RenderTargetDescs.Data[i].BlendDesc;
         colorFormats[i] = desc.RenderTargetDescs.Data[i].Format;
@@ -2105,7 +1785,7 @@ ib_GraphicsPipeline ib_allocGraphicsPipeline(ib_Core* core, ib_GraphicsPipelineD
         .scissorCount = 1,
         .pScissors = &scissor,
     };
-    VkDynamicState const dynamicStates[] = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+    VkDynamicState const dynamicStates[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
     VkPipelineDynamicStateCreateInfo dynamicStateCreate =
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
@@ -2118,7 +1798,7 @@ ib_GraphicsPipeline ib_allocGraphicsPipeline(ib_Core* core, ib_GraphicsPipelineD
 
     ib_vkCheck(vkCreateGraphicsPipelines(core->LogicalDevice, core->PipelineCache, 1, &graphicsPipelineCreate, ib_NoVkAllocator, &graphicsPipeline.VulkanPipeline));
 
-    for(uint32_t i = 0; i < desc.ShaderDescs.Count; i++)
+    for (uint32_t i = 0; i < desc.ShaderDescs.Count; i++)
     {
         vkDestroyShaderModule(core->LogicalDevice, shaderModules[i], ib_NoVkAllocator);
     }
@@ -2130,11 +1810,11 @@ void ib_freeGraphicsPipeline(ib_Core* core, ib_GraphicsPipeline* pipeline)
 {
     vkDestroyPipeline(core->LogicalDevice, pipeline->VulkanPipeline, ib_NoVkAllocator);
     vkDestroyPipelineLayout(core->LogicalDevice, pipeline->Layout, ib_NoVkAllocator);
-    for(uint32_t i = 0; i < ib_MaxShaderInputLayoutPerPipeline; i++)
+    for (uint32_t i = 0; i < ib_MaxShaderInputLayoutPerPipeline; i++)
     {
         ib_freeShaderInputLayout(core, &pipeline->InlineShaderInputLayouts[i]);
     }
-	*pipeline = (ib_GraphicsPipeline) { 0 };
+    *pipeline = (ib_GraphicsPipeline) { 0 };
 }
 
 ib_ComputePipeline ib_allocComputePipeline(ib_Core* core, ib_ComputePipelineDesc desc)
@@ -2142,48 +1822,48 @@ ib_ComputePipeline ib_allocComputePipeline(ib_Core* core, ib_ComputePipelineDesc
     ib_ComputePipeline computePipeline = { 0 };
 
     // Pipeline layout
-	VkDescriptorSetLayout layouts[ib_MaxShaderInputLayoutPerPipeline] = { 0 };
-	uint32_t layoutCount = 0;
-	for (uint32_t i = 0; i < ib_MaxShaderInputLayoutPerPipeline; i++)
-	{
-		ib_PipelineShaderInputDesc const* input = &desc.ShaderInputs[i];
-		if (input->Inline.Count > 0)
-		{
-			uint32_t inlineCount = computePipeline.InlineShaderInputLayoutCount++;
-			computePipeline.InlineShaderInputLayouts[inlineCount] = ib_allocShaderInputLayout(core, (ib_ShaderInputLayoutDesc) { input->Inline });
-			layouts[i] = computePipeline.InlineShaderInputLayouts[inlineCount].DescriptorSetLayout;
-		}
-		else if(input->External != NULL)
-		{
-			layouts[i] = input->External->DescriptorSetLayout;
-		}
-		else
-		{
-			break; // No more shader inputs.
-		}
+    VkDescriptorSetLayout layouts[ib_MaxShaderInputLayoutPerPipeline] = { 0 };
+    uint32_t layoutCount = 0;
+    for (uint32_t i = 0; i < ib_MaxShaderInputLayoutPerPipeline; i++)
+    {
+        ib_PipelineShaderInputDesc const* input = &desc.ShaderInputs[i];
+        if (input->Inline.Count > 0)
+        {
+            uint32_t inlineCount = computePipeline.InlineShaderInputLayoutCount++;
+            computePipeline.InlineShaderInputLayouts[inlineCount] = ib_allocShaderInputLayout(core, (ib_ShaderInputLayoutDesc) { input->Inline });
+            layouts[i] = computePipeline.InlineShaderInputLayouts[inlineCount].DescriptorSetLayout;
+        }
+        else if (input->External != NULL)
+        {
+            layouts[i] = input->External->DescriptorSetLayout;
+        }
+        else
+        {
+            break; // No more shader inputs.
+        }
 
-		layoutCount++;
-	}
+        layoutCount++;
+    }
 
 #ifdef IB_DEBUG
-	for (uint32_t i = layoutCount; i < ib_MaxShaderInputLayoutPerPipeline; i++)
-	{
-		ib_PipelineShaderInputDesc const* input = &desc.ShaderInputs[i];
-		ib_assert(input->Inline.Count == 0 && input->External == NULL); // This suggests we had a gap between shader inputs. This is not allowed.
-	}
+    for (uint32_t i = layoutCount; i < ib_MaxShaderInputLayoutPerPipeline; i++)
+    {
+        ib_PipelineShaderInputDesc const* input = &desc.ShaderInputs[i];
+        ib_assert(input->Inline.Count == 0 && input->External == NULL); // This suggests we had a gap between shader inputs. This is not allowed.
+    }
 #endif // IB_DEBUG
 
-	ib_assert(desc.PushConstants.Data == NULL || desc.PushConstants.Count > 0);
-	VkPipelineLayoutCreateInfo pipelineLayoutCreate =
-	{
-		.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-		.setLayoutCount = layoutCount,
-		.pSetLayouts = layouts,
-		.pushConstantRangeCount = desc.PushConstants.Count,
-		.pPushConstantRanges = desc.PushConstants.Data
-	};
+    ib_assert(desc.PushConstants.Data == NULL || desc.PushConstants.Count > 0);
+    VkPipelineLayoutCreateInfo pipelineLayoutCreate =
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .setLayoutCount = layoutCount,
+        .pSetLayouts = layouts,
+        .pushConstantRangeCount = desc.PushConstants.Count,
+        .pPushConstantRanges = desc.PushConstants.Data
+    };
 
-	ib_vkCheck(vkCreatePipelineLayout(core->LogicalDevice, &pipelineLayoutCreate, ib_NoVkAllocator, &computePipeline.Layout));
+    ib_vkCheck(vkCreatePipelineLayout(core->LogicalDevice, &pipelineLayoutCreate, ib_NoVkAllocator, &computePipeline.Layout));
 
     VkComputePipelineCreateInfo computePipelineCreate =
     {
@@ -2207,7 +1887,7 @@ ib_ComputePipeline ib_allocComputePipeline(ib_Core* core, ib_ComputePipelineDesc
         };
         ib_vkCheck(vkCreateShaderModule(core->LogicalDevice, &createShader, ib_NoVkAllocator, &shaderModule));
 
-        VkPipelineShaderStageRequiredSubgroupSizeCreateInfo requiredWaveSize = 
+        VkPipelineShaderStageRequiredSubgroupSizeCreateInfo requiredWaveSize =
         {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_REQUIRED_SUBGROUP_SIZE_CREATE_INFO,
             .requiredSubgroupSize = desc.ShaderDesc.RequiredWaveSize
@@ -2238,11 +1918,22 @@ void ib_freeComputePipeline(ib_Core* core, ib_ComputePipeline* pipeline)
 {
     vkDestroyPipeline(core->LogicalDevice, pipeline->VulkanPipeline, ib_NoVkAllocator);
     vkDestroyPipelineLayout(core->LogicalDevice, pipeline->Layout, ib_NoVkAllocator);
-    for(uint32_t i = 0; i < ib_MaxShaderInputLayoutPerPipeline; i++)
+    for (uint32_t i = 0; i < ib_MaxShaderInputLayoutPerPipeline; i++)
     {
         ib_freeShaderInputLayout(core, &pipeline->InlineShaderInputLayouts[i]);
     }
-	*pipeline = (ib_ComputePipeline) { 0 };
+    *pipeline = (ib_ComputePipeline) { 0 };
+}
+
+void ib_bindShaderInputToCompute(VkCommandBuffer commands, ib_ComputePipeline const* pipeline, ib_ShaderInput const* shaderInput)
+{
+    vkCmdBindDescriptorSets(commands, VK_PIPELINE_BIND_POINT_COMPUTE,
+                                pipeline->Layout,
+                                0u,
+                                1u,
+                                &shaderInput->DescriptorSet,
+                                0u,
+                                NULL);
 }
 
 // utility
@@ -2251,11 +1942,11 @@ void ib_printComputePipelineStatistics(ib_Core* core, ib_ComputePipeline const* 
 {
 #define maxStatCount 128
 
-	uint32_t statCount = 0;
-	VkPipelineExecutableStatisticKHR stats[maxStatCount] = { 0 };
-	for (uint32_t i = 0; i < ib_arrayCount(stats); i++)
-	{
-		stats[i].sType = VK_STRUCTURE_TYPE_PIPELINE_EXECUTABLE_STATISTIC_KHR;
+    uint32_t statCount = 0;
+    VkPipelineExecutableStatisticKHR stats[maxStatCount] = { 0 };
+    for (uint32_t i = 0; i < ib_arrayCount(stats); i++)
+    {
+        stats[i].sType = VK_STRUCTURE_TYPE_PIPELINE_EXECUTABLE_STATISTIC_KHR;
     }
 
     VkPipelineExecutableInfoKHR executableInfo =
@@ -2275,18 +1966,18 @@ void ib_printComputePipelineStatistics(ib_Core* core, ib_ComputePipeline const* 
     {
         switch (stats[i].format)
         {
-        case VK_PIPELINE_EXECUTABLE_STATISTIC_FORMAT_BOOL32_KHR:
-			printf("    %s: %s\n", stats[i].name, stats[i].value.b32 == VK_TRUE ? "True" : "False");
-			break;
-        case VK_PIPELINE_EXECUTABLE_STATISTIC_FORMAT_FLOAT64_KHR:
-            printf("    %s: %f\n", stats[i].name, stats[i].value.f64);
-            break;
-        case VK_PIPELINE_EXECUTABLE_STATISTIC_FORMAT_INT64_KHR:
-            printf("    %s: %" PRId64 "\n", stats[i].name, stats[i].value.i64);
-            break;
-        case VK_PIPELINE_EXECUTABLE_STATISTIC_FORMAT_UINT64_KHR:
-			printf("    %s: %" PRIu64 "\n", stats[i].name, stats[i].value.u64);
-			break;
+            case VK_PIPELINE_EXECUTABLE_STATISTIC_FORMAT_BOOL32_KHR:
+                printf("    %s: %s\n", stats[i].name, stats[i].value.b32 == VK_TRUE ? "True" : "False");
+                break;
+            case VK_PIPELINE_EXECUTABLE_STATISTIC_FORMAT_FLOAT64_KHR:
+                printf("    %s: %f\n", stats[i].name, stats[i].value.f64);
+                break;
+            case VK_PIPELINE_EXECUTABLE_STATISTIC_FORMAT_INT64_KHR:
+                printf("    %s: %" PRId64 "\n", stats[i].name, stats[i].value.i64);
+                break;
+            case VK_PIPELINE_EXECUTABLE_STATISTIC_FORMAT_UINT64_KHR:
+                printf("    %s: %" PRIu64 "\n", stats[i].name, stats[i].value.u64);
+                break;
         }
     }
 
@@ -2296,16 +1987,16 @@ void ib_printComputePipelineStatistics(ib_Core* core, ib_ComputePipeline const* 
 // Timers
 void ib_initTimerManager(ib_TimerManagerDesc desc, ib_TimerManager* outManager)
 {
-    *outManager = (ib_TimerManager){ 0 };
+    *outManager = (ib_TimerManager) { 0 };
 
     outManager->MaxTimestampCount = desc.MaxTimerCount * 2;
-	ib_vkCheck(vkCreateQueryPool(desc.Core->LogicalDevice, 
-		&(VkQueryPoolCreateInfo)
-		{
-			.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO,
-			.queryType = VK_QUERY_TYPE_TIMESTAMP,
-			.queryCount = outManager->MaxTimestampCount,
-		}, ib_NoVkAllocator, &outManager->TimestampPool));
+    ib_vkCheck(vkCreateQueryPool(desc.Core->LogicalDevice,
+                                 &(VkQueryPoolCreateInfo)
+                                 {
+                                     .sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO,
+                                     .queryType = VK_QUERY_TYPE_TIMESTAMP,
+                                     .queryCount = outManager->MaxTimestampCount,
+                                 }, ib_NoVkAllocator, &outManager->TimestampPool));
 }
 
 void ib_killTimerManager(ib_Core* core, ib_TimerManager* manager)
@@ -2321,8 +2012,8 @@ void ib_resetTimers(ib_TimerManager* manager, VkCommandBuffer commandBuffer)
 
 void ib_resetTimersCPU(ib_Core* core, ib_TimerManager* manager)
 {
-	vkResetQueryPool(core->LogicalDevice, manager->TimestampPool, 0, manager->MaxTimestampCount);
-	manager->NextTimestamp = 0;
+    vkResetQueryPool(core->LogicalDevice, manager->TimestampPool, 0, manager->MaxTimestampCount);
+    manager->NextTimestamp = 0;
 }
 
 ib_Timer ib_beginTimer(ib_TimerManager* manager, VkCommandBuffer commandBuffer)
@@ -2344,25 +2035,25 @@ void ib_endTimer(ib_TimerManager* manager, VkCommandBuffer commandBuffer, ib_Tim
 
 double ib_queryTimer(ib_Core* core, ib_TimerManager* manager, ib_Timer const* timer, bool blocking)
 {
-	uint32_t flags = VK_QUERY_RESULT_64_BIT;
-	if (blocking)
-	{
-		flags |= VK_QUERY_RESULT_WAIT_BIT;
-	}
+    uint32_t flags = VK_QUERY_RESULT_64_BIT;
+    if (blocking)
+    {
+        flags |= VK_QUERY_RESULT_WAIT_BIT;
+    }
     uint64_t timestamps[2];
-	VkResult result = vkGetQueryPoolResults(core->LogicalDevice, manager->TimestampPool, timer->TimestampIndex, 2, sizeof(uint64_t) * 2, timestamps, sizeof(uint64_t), flags);
+    VkResult result = vkGetQueryPoolResults(core->LogicalDevice, manager->TimestampPool, timer->TimestampIndex, 2, sizeof(uint64_t) * 2, timestamps, sizeof(uint64_t), flags);
 	
-	if (result == VK_NOT_READY)
-	{
-		return ib_TimerQueryNotReady;
-	}
-	else
-	{
-		double duration = (double)(timestamps[1] - timestamps[0]) * core->DeviceLimits.timestampPeriod;
-		duration /= 1000000.0; // nanoseconds to milliseconds
+    if (result == VK_NOT_READY)
+    {
+        return ib_TimerQueryNotReady;
+    }
+    else
+    {
+        double duration = (double)(timestamps[1] - timestamps[0]) * core->DeviceLimits.timestampPeriod;
+        duration /= 1000000.0; // nanoseconds to milliseconds
 
-		return duration;
-	}
+        return duration;
+    }
 }
 
 // Raytracing
@@ -2372,9 +2063,6 @@ PFN_vkDestroyAccelerationStructureKHR ib_vkDestroyAccelerationStructureKHR;
 PFN_vkCmdBuildAccelerationStructuresKHR ib_vkCmdBuildAccelerationStructuresKHR;
 PFN_vkGetAccelerationStructureDeviceAddressKHR ib_vkGetAccelerationStructureDeviceAddressKHR;
 PFN_vkGetAccelerationStructureBuildSizesKHR ib_vkGetAccelerationStructureBuildSizesKHR;
-PFN_vkCreateRayTracingPipelinesKHR ib_vkCreateRayTracingPipelinesKHR;
-PFN_vkGetRayTracingShaderGroupHandlesKHR ib_vkGetRayTracingShaderGroupHandlesKHR;
-PFN_vkCmdTraceRaysKHR ib_vkCmdTraceRaysKHR;
 
 VkResult VKAPI_CALL vkCreateAccelerationStructureKHR(
     VkDevice device,
@@ -2415,7 +2103,7 @@ void VKAPI_CALL vkCmdBuildAccelerationStructuresKHR(
     VkCommandBuffer commandBuffer,
     uint32_t infoCount,
     const VkAccelerationStructureBuildGeometryInfoKHR* pInfos,
-    const VkAccelerationStructureBuildRangeInfoKHR* const* ppBuildRangeInfos)
+    const VkAccelerationStructureBuildRangeInfoKHR * const* ppBuildRangeInfos)
 {
     if (ib_vkCmdBuildAccelerationStructuresKHR == NULL)
     {
@@ -2467,86 +2155,6 @@ void VKAPI_CALL vkGetAccelerationStructureBuildSizesKHR(
         pSizeInfo);
 }
 
-VkResult VKAPI_CALL vkCreateRayTracingPipelinesKHR(
-    VkDevice device,
-    VkDeferredOperationKHR deferredOperation,
-    VkPipelineCache pipelineCache,
-    uint32_t createInfoCount,
-    const VkRayTracingPipelineCreateInfoKHR* pCreateInfos,
-    const VkAllocationCallbacks* pAllocator,
-    VkPipeline* pPipelines)
-{
-    if (ib_vkCreateRayTracingPipelinesKHR == NULL)
-    {
-        return VK_ERROR_EXTENSION_NOT_PRESENT;
-    }
-
-    return ib_vkCreateRayTracingPipelinesKHR(
-        device,
-        deferredOperation,
-        pipelineCache,
-        createInfoCount,
-        pCreateInfos,
-        pAllocator,
-        pPipelines);
-}
-
-VkResult VKAPI_CALL vkGetRayTracingShaderGroupHandlesKHR(
-    VkDevice device,
-    VkPipeline pipeline,
-    uint32_t firstGroup,
-    uint32_t groupCount,
-    size_t dataSize,
-    void* pData)
-{
-    if (ib_vkGetRayTracingShaderGroupHandlesKHR == NULL)
-    {
-        return VK_ERROR_EXTENSION_NOT_PRESENT;
-    }
-
-    return ib_vkGetRayTracingShaderGroupHandlesKHR(
-        device,
-        pipeline,
-        firstGroup,
-        groupCount,
-        dataSize,
-        pData);
-}
-
-VKAPI_ATTR void VKAPI_CALL vkCmdTraceRaysKHR(
-    VkCommandBuffer commandBuffer,
-    const VkStridedDeviceAddressRegionKHR* pRaygenShaderBindingTable,
-    const VkStridedDeviceAddressRegionKHR* pMissShaderBindingTable,
-    const VkStridedDeviceAddressRegionKHR* pHitShaderBindingTable,
-    const VkStridedDeviceAddressRegionKHR* pCallableShaderBindingTable,
-    uint32_t width,
-    uint32_t height,
-    uint32_t depth)
-{
-    if (ib_vkCmdTraceRaysKHR == NULL)
-    {
-        ib_vkCheck(VK_ERROR_EXTENSION_NOT_PRESENT);
-        return;
-    }
-
-    ib_vkCmdTraceRaysKHR(
-        commandBuffer,
-        pRaygenShaderBindingTable,
-        pMissShaderBindingTable,
-        pHitShaderBindingTable,
-        pCallableShaderBindingTable,
-        width,
-        height,
-        depth);
-}
-
-static uint32_t alignUpSizeToAlignment(uint32_t notAlignedSize, uint32_t alignment)
-{
-    ib_check(alignment > 0);
-    return ((notAlignedSize + alignment - 1) / alignment) * alignment;
-}
-
-
 static iba_PageHeader* allocRaytracingStagingMemoryPage(void* userData, size_t pageSize)
 {
     StackGpuMemoryPage* page = calloc(1, sizeof(StackGpuMemoryPage));
@@ -2565,12 +2173,12 @@ static iba_PageHeader* allocRaytracingStagingMemoryPage(void* userData, size_t p
     vkGetBufferMemoryRequirements(logicalDevice, page->Buffer, &memoryRequirements);
 
     page->PageAlloc = iba_gpuAlloc(&raytracing->Core->Allocator, (iba_GpuAllocationRequest)
-								   {
-									   .Size = pageSize,
-									   .Alignment = raytracing->AccelerationStructureScratchBufferAlignment,
-									   .TypeBits = memoryRequirements.memoryTypeBits,
-									   .RequiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-								   });
+                                   {
+                                       .Size = memoryRequirements.size,
+                                       .Alignment = raytracing->AccelerationStructureScratchBufferAlignment,
+                                       .TypeBits = memoryRequirements.memoryTypeBits,
+                                       .RequiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                                   });
 
     ib_vkCheck(vkBindBufferMemory(logicalDevice, page->Buffer, page->PageAlloc.Memory, page->PageAlloc.Offset));
 
@@ -2589,460 +2197,51 @@ static void freeRaytracingStagingMemoryPage(void* userData, iba_PageHeader* page
 
 void ib_initRaytracing(ib_Core* core, ib_Raytracing* raytracing)
 {
-	raytracing->Core = core;
+    raytracing->Core = core;
 
     ib_vkCreateAccelerationStructureKHR = ib_getVulkanFunc(core->Instance, vkCreateAccelerationStructureKHR);
     ib_vkDestroyAccelerationStructureKHR = ib_getVulkanFunc(core->Instance, vkDestroyAccelerationStructureKHR);
     ib_vkCmdBuildAccelerationStructuresKHR = ib_getVulkanFunc(core->Instance, vkCmdBuildAccelerationStructuresKHR);
     ib_vkGetAccelerationStructureDeviceAddressKHR = ib_getVulkanFunc(core->Instance, vkGetAccelerationStructureDeviceAddressKHR);
     ib_vkGetAccelerationStructureBuildSizesKHR = ib_getVulkanFunc(core->Instance, vkGetAccelerationStructureBuildSizesKHR);
-    ib_vkCreateRayTracingPipelinesKHR = ib_getVulkanFunc(core->Instance, vkCreateRayTracingPipelinesKHR);
-    ib_vkGetRayTracingShaderGroupHandlesKHR = ib_getVulkanFunc(core->Instance, vkGetRayTracingShaderGroupHandlesKHR);
-    ib_vkCmdTraceRaysKHR = ib_getVulkanFunc(core->Instance, vkCmdTraceRaysKHR);
 
-    VkPhysicalDeviceAccelerationStructurePropertiesKHR ASProps = {
+    VkPhysicalDeviceAccelerationStructurePropertiesKHR asProps = {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR,
     };
-
-    VkPhysicalDeviceRayTracingPipelinePropertiesKHR raytracePipelineProp = {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR,
-        .pNext = &ASProps
-    };
-
-    VkPhysicalDeviceProperties2 deviceProperties2 = {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2,
-        .pNext = &raytracePipelineProp,
-    };
-
-    vkGetPhysicalDeviceProperties2(core->PhysicalDevice, &deviceProperties2);
-
-    raytracing->SBTGroupHandleSize = raytracePipelineProp.shaderGroupHandleSize;
-    raytracing->SBTGroupHandleAlignment = raytracePipelineProp.shaderGroupHandleAlignment;
-    raytracing->SBTGroupBaseAlignment = raytracePipelineProp.shaderGroupBaseAlignment;
-    raytracing->SBTGroupHandleSizeAligned = alignUpSizeToAlignment(raytracing->SBTGroupHandleSize, raytracing->SBTGroupHandleAlignment);
-
-    raytracing->AccelerationStructureScratchBufferAlignment = ASProps.minAccelerationStructureScratchOffsetAlignment;
+    raytracing->AccelerationStructureScratchBufferAlignment = asProps.minAccelerationStructureScratchOffsetAlignment;
 }
 
 void ib_killRaytracing(ib_Raytracing* raytracing)
 {
-	// Nothing to do here. Function exists for symmetry for now.
-	ib_potentiallyUnused(raytracing);
+    // Nothing to do here. Function exists for symmetry for now.
+    ib_potentiallyUnused(raytracing);
 }
 
 
 void ib_initRaytracingScratch(ib_Raytracing* raytracing, iba_StackAllocator* allocator)
 {
-	iba_StackAllocatorDesc createInfo = {
-		.PageAllocator = {
-			.AllocPage = &allocRaytracingStagingMemoryPage,
-			.FreePage = &freeRaytracingStagingMemoryPage,
-			.UserData = raytracing
-		},
-		.PageSize = 1024 * 1024 * 256
-	};
-	iba_initStackAllocator(createInfo, allocator);
+    iba_StackAllocatorDesc createInfo = {
+        .PageAllocator = {
+            .AllocPage = &allocRaytracingStagingMemoryPage,
+            .FreePage = &freeRaytracingStagingMemoryPage,
+            .UserData = raytracing
+        },
+        .PageSize = 1024 * 1024 * 256
+    };
+    iba_initStackAllocator(createInfo, allocator);
 }
 
 void ib_killRaytracingScratch(iba_StackAllocator* allocator)
 {
-	iba_killStackAllocator(allocator);
-}
-
-ib_RaytracePipeline ib_allocRaytracePipeline(ib_Raytracing* raytracing, ib_RaytracePipelineDesc desc)
-{
-    ib_RaytracePipeline raytracePipeline = { 0 };
-
-    // Pipeline layout
-    {
-		#define maxShaderInputLayouts 32
-        ib_assert(desc.ExternalShaderInputLayouts.Data == NULL || desc.ExternalShaderInputLayouts.Count > 0);
-
-        ib_assert(desc.ExternalShaderInputLayouts.Count < maxShaderInputLayouts, "Too many shader blocks! Increase maxShaderInputLayouts.");
-        VkDescriptorSetLayout layouts[maxShaderInputLayouts] = { 0 };
-		#undef maxShaderInputLayouts
-
-        uint32_t layoutCount = 0;
-        if (desc.ShaderInputs.Count > 0)
-        {
-            raytracePipeline.ShaderInputLayout = ib_allocShaderInputLayout(raytracing->Core, (ib_ShaderInputLayoutDesc) { desc.ShaderInputs });
-            layouts[0] = raytracePipeline.ShaderInputLayout.DescriptorSetLayout;
-            layoutCount++;
-        }
-
-        for (uint32_t i = 0; i < desc.ExternalShaderInputLayouts.Count; i++)
-        {
-            layouts[layoutCount] = desc.ExternalShaderInputLayouts.Data[i]->DescriptorSetLayout;
-            layoutCount++;
-        }
-
-        ib_assert(desc.PushConstants.Data == NULL || desc.PushConstants.Count > 0);
-        VkPipelineLayoutCreateInfo pipelineLayoutCreate =
-        {
-            .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-            .setLayoutCount = layoutCount,
-            .pSetLayouts = layouts,
-            .pushConstantRangeCount = desc.PushConstants.Count,
-            .pPushConstantRanges = desc.PushConstants.Data
-        };
-
-        ib_vkCheck(vkCreatePipelineLayout(raytracing->Core->LogicalDevice, &pipelineLayoutCreate, ib_NoVkAllocator, &raytracePipeline.Layout));
-    }
-
-	#define maxShaderCount 64 
-	#define maxGroups 32
-
-    ib_assert(desc.RaygenShaderDesc.Code != NULL);
-    ib_assert(desc.HitGroupsDesc.Data == NULL || desc.HitGroupsDesc.Count > 0);
-    ib_assert(desc.MissGroupDesc.Data == NULL || desc.MissGroupDesc.Count > 0);
-    ib_assert(desc.HitGroupsDesc.Count + desc.MissGroupDesc.Count + 1 /*raygen shader*/ <= maxGroups);
-
-    VkShaderModule shaderModules[maxShaderCount] = { 0 };
-    VkPipelineShaderStageCreateInfo shaderStages[maxShaderCount] = { 0 };
-    VkRayTracingShaderGroupCreateInfoKHR shaderGroups[maxGroups] = { 0 };
-
-    uint32_t const raygenGroupsCount = 1;
-    uint32_t const hitGroupsCount = desc.HitGroupsDesc.Count;
-    uint32_t const missGroupsCount = desc.MissGroupDesc.Count;
-    uint32_t const totalGroupsCount = raygenGroupsCount + hitGroupsCount + missGroupsCount;
-    uint32_t shadersCount = 0;
-
-    {
-        uint32_t shaderIdx = 0;
-        uint32_t shaderGroupIdx = 0;
-
-        {
-            ib_assert(desc.RaygenShaderDesc.Stage == 0);
-
-            VkShaderModuleCreateInfo createShader =
-            {
-                .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-                .pCode = (uint32_t const*)desc.RaygenShaderDesc.Code,
-                .codeSize = desc.RaygenShaderDesc.CodeSize
-            };
-
-            ib_vkCheck(vkCreateShaderModule(raytracing->Core->LogicalDevice, &createShader, ib_NoVkAllocator, &shaderModules[shaderIdx]));
-
-            shaderStages[shaderIdx] = (VkPipelineShaderStageCreateInfo)
-            {
-                .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-                .pName = desc.RaygenShaderDesc.EntryPoint,
-                .module = shaderModules[shaderIdx],
-                .stage = VK_SHADER_STAGE_RAYGEN_BIT_KHR
-            };
-
-            shaderGroups[shaderGroupIdx] = (VkRayTracingShaderGroupCreateInfoKHR){
-                .sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR,
-                .type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR,
-                .generalShader = shaderIdx,
-                .closestHitShader = VK_SHADER_UNUSED_KHR,
-                .anyHitShader = VK_SHADER_UNUSED_KHR,
-                .intersectionShader = VK_SHADER_UNUSED_KHR,
-            };
-
-            shaderIdx++;
-            shaderGroupIdx++;
-        }
-
-        if (desc.HitGroupsDesc.Count > 0)
-        {
-            bool hitGroupInstanceInited[maxGroups] = { 0 };
-            for (uint32_t i = 0; i < desc.HitGroupsDesc.Count; i++)
-            {
-                ib_HitGroupShadersDescription hitGroupDesc = desc.HitGroupsDesc.Data[i];
-
-                ib_assert(hitGroupDesc.ClosestHit.Stage == 0);
-                ib_assert(hitGroupDesc.AnyHit.Stage == 0);
-                ib_assert(hitGroupDesc.Intersection.Stage == 0);
-
-                VkRayTracingShaderGroupTypeKHR groupType = hitGroupDesc.Intersection.Code != NULL
-                    ? VK_RAY_TRACING_SHADER_GROUP_TYPE_PROCEDURAL_HIT_GROUP_KHR
-                    : VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
-
-                VkRayTracingShaderGroupCreateInfoKHR shaderGroupInfo = {
-                    .sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR,
-                    .type = groupType,
-                    .generalShader = VK_SHADER_UNUSED_KHR,
-                    .closestHitShader = VK_SHADER_UNUSED_KHR,
-                    .anyHitShader = VK_SHADER_UNUSED_KHR,
-                    .intersectionShader = VK_SHADER_UNUSED_KHR,
-                };
-
-                if (hitGroupDesc.ClosestHit.Code != NULL)
-                {
-                    VkShaderModuleCreateInfo createShader =
-                    {
-                        .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-                        .pCode = (uint32_t const*)hitGroupDesc.ClosestHit.Code,
-                        .codeSize = hitGroupDesc.ClosestHit.CodeSize
-                    };
-
-                    ib_vkCheck(vkCreateShaderModule(raytracing->Core->LogicalDevice, &createShader, ib_NoVkAllocator, &shaderModules[shaderIdx]));
-
-                    shaderStages[shaderIdx] = (VkPipelineShaderStageCreateInfo)
-                    {
-                        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-                        .pName = hitGroupDesc.ClosestHit.EntryPoint,
-                        .module = shaderModules[shaderIdx],
-                        .stage = VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR
-                    };
-
-                    shaderGroupInfo.closestHitShader = shaderIdx;
-                    shaderIdx++;
-                    ib_assert(shaderIdx < maxShaderCount);
-
-                    hitGroupInstanceInited[hitGroupDesc.InstanceIdx] = true;
-                }
-
-                if (hitGroupDesc.AnyHit.Code != NULL)
-                {
-                    VkShaderModuleCreateInfo createShader =
-                    {
-                        .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-                        .pCode = (uint32_t const*)hitGroupDesc.AnyHit.Code,
-                        .codeSize = hitGroupDesc.AnyHit.CodeSize
-                    };
-
-                    ib_vkCheck(vkCreateShaderModule(raytracing->Core->LogicalDevice, &createShader, ib_NoVkAllocator, &shaderModules[shaderIdx]));
-
-                    shaderStages[shaderIdx] = (VkPipelineShaderStageCreateInfo)
-                    {
-                        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-                        .pName = hitGroupDesc.AnyHit.EntryPoint,
-                        .module = shaderModules[shaderIdx],
-                        .stage = VK_SHADER_STAGE_ANY_HIT_BIT_KHR
-                    };
-
-                    shaderGroupInfo.anyHitShader = shaderIdx;
-                    shaderIdx++;
-                    ib_assert(shaderIdx < maxShaderCount);
-
-                    hitGroupInstanceInited[hitGroupDesc.InstanceIdx] = true;
-                }
-
-                if (hitGroupDesc.Intersection.Code != NULL)
-                {
-                    VkShaderModuleCreateInfo createShader =
-                    {
-                        .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-                        .pCode = (const uint32_t*)hitGroupDesc.Intersection.Code,
-                        .codeSize = hitGroupDesc.Intersection.CodeSize
-                    };
-
-                    ib_vkCheck(vkCreateShaderModule(raytracing->Core->LogicalDevice, &createShader, ib_NoVkAllocator, &shaderModules[shaderIdx]));
-
-                    shaderStages[shaderIdx] = (VkPipelineShaderStageCreateInfo)
-                    {
-                        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-                        .pName = hitGroupDesc.Intersection.EntryPoint,
-                        .module = shaderModules[shaderIdx],
-                        .stage = VK_SHADER_STAGE_INTERSECTION_BIT_KHR
-                    };
-
-                    shaderGroupInfo.intersectionShader = shaderIdx;
-                    shaderIdx++;
-                    ib_assert(shaderIdx < maxShaderCount);
-
-                    hitGroupInstanceInited[hitGroupDesc.InstanceIdx] = true;
-                }
-
-                shaderGroups[raygenGroupsCount + hitGroupDesc.InstanceIdx] = shaderGroupInfo;
-                shaderGroupIdx++;
-            }
-
-            for (uint32_t i = 0; i < desc.HitGroupsDesc.Count; ++i)
-            {
-                ib_assert(hitGroupInstanceInited[i], "Don't allow sparse space in instance indexes");
-            }
-        }
-
-        if (desc.MissGroupDesc.Count > 0)
-        {
-            bool missGroupInstanceInited[maxGroups] = { 0 };
-            for (uint32_t i = 0; i < desc.MissGroupDesc.Count; i++)
-            {
-                ib_MissGroupShaderDescription missGroupDesc = desc.MissGroupDesc.Data[i];
-
-                ib_assert(missGroupDesc.Miss.Stage == 0);
-
-                VkRayTracingShaderGroupCreateInfoKHR shaderGroupInfo = {
-                    .sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR,
-                    .type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR,
-                    .generalShader = VK_SHADER_UNUSED_KHR,
-                    .closestHitShader = VK_SHADER_UNUSED_KHR,
-                    .anyHitShader = VK_SHADER_UNUSED_KHR,
-                    .intersectionShader = VK_SHADER_UNUSED_KHR,
-                };
-
-                VkShaderModuleCreateInfo createShader =
-                {
-                    .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-                    .pCode = (const uint32_t*)missGroupDesc.Miss.Code,
-                    .codeSize = missGroupDesc.Miss.CodeSize
-                };
-
-                ib_vkCheck(vkCreateShaderModule(raytracing->Core->LogicalDevice, &createShader, ib_NoVkAllocator, &shaderModules[shaderIdx]));
-
-                shaderStages[shaderIdx] = (VkPipelineShaderStageCreateInfo)
-                {
-                    .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-                    .pName = missGroupDesc.Miss.EntryPoint,
-                    .module = shaderModules[shaderIdx],
-                    .stage = VK_SHADER_STAGE_MISS_BIT_KHR
-                };
-
-                shaderGroupInfo.generalShader = shaderIdx;
-                shaderIdx++;
-                ib_assert(shaderIdx < maxShaderCount);
-
-                missGroupInstanceInited[missGroupDesc.InstanceIdx] = true;
-                shaderGroups[raygenGroupsCount + hitGroupsCount + missGroupDesc.InstanceIdx] = shaderGroupInfo;
-                shaderGroupIdx++;
-            }
-
-            for (uint32_t i = 0; i < desc.MissGroupDesc.Count; ++i)
-            {
-                ib_assert(missGroupInstanceInited[i], "Don't allow sparse space in instance indexes");
-            }
-        }
-
-        ib_assert(totalGroupsCount == shaderGroupIdx);
-        
-        shadersCount = shaderIdx;
-    }
-
-	#undef maxGroups
-	#undef maxShaderCount
-
-    VkRayTracingPipelineCreateInfoKHR createPipelineInfo = {
-        .sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR,
-        .stageCount = shadersCount,
-        .pStages = shaderStages,
-        .groupCount = totalGroupsCount,
-        .pGroups = shaderGroups,
-        .maxPipelineRayRecursionDepth = 1,
-        .layout = raytracePipeline.Layout
-    };
-
-    ib_vkCheck(vkCreateRayTracingPipelinesKHR(
-        raytracing->Core->LogicalDevice,
-        VK_NULL_HANDLE,
-        VK_NULL_HANDLE,
-        1,
-        &createPipelineInfo,
-        ib_NoVkAllocator,
-        &raytracePipeline.VulkanPipeline));
-
-    for (uint32_t i = 0; i < shadersCount; ++i)
-    {
-        vkDestroyShaderModule(raytracing->Core->LogicalDevice, shaderModules[i], ib_NoVkAllocator);
-    }
-
-    // Base address of every shader group section must be aligned to SBTGroupBaseAlignment
-    // Shader groups: raygen shaders, hit shaders, miss shaders, callable shaders
-    // https://www.willusher.io/graphics/2019/11/20/the-sbt-three-ways
-    // At the bottom of the website there is a SBT layout calculator which show how must be aligned groups
-    uint32_t const raygenSBTDataSize = raygenGroupsCount * raytracing->SBTGroupHandleSizeAligned;
-    uint32_t const raygenSBTDataSizeAligned = alignUpSizeToAlignment(raygenSBTDataSize, raytracing->SBTGroupBaseAlignment);
-    uint32_t const hitSBTDataSize = hitGroupsCount * raytracing->SBTGroupHandleSizeAligned;
-    uint32_t const hitSBTDataSizeAligned = alignUpSizeToAlignment(hitSBTDataSize, raytracing->SBTGroupBaseAlignment);
-    uint32_t const missSBTDataSize = missGroupsCount * raytracing->SBTGroupHandleSizeAligned;
-
-    // We don't need an aligned missSBTDataSize as it is the las our group section
-
-    uint32_t const SBTDataSize = raygenSBTDataSizeAligned + hitSBTDataSizeAligned + missSBTDataSize;
-    uint32_t const raygenByteOffset = 0;
-    uint32_t const hitGroupsByteOffset = raygenSBTDataSizeAligned;
-    uint32_t const missGroupsByteOffset = raygenSBTDataSizeAligned + hitSBTDataSizeAligned;
-
-    uint8_t* handlesData = calloc(totalGroupsCount, raytracing->SBTGroupHandleSize);
-    uint8_t* SBTData = calloc(1, SBTDataSize);
-
-    ib_vkCheck(vkGetRayTracingShaderGroupHandlesKHR(
-        raytracing->Core->LogicalDevice,
-        raytracePipeline.VulkanPipeline,
-        0,
-        totalGroupsCount,
-        totalGroupsCount * raytracing->SBTGroupHandleSize,
-        handlesData));
-
-    {
-        uint8_t* const raygenBaseAddressDestination = SBTData + raygenByteOffset;
-        uint8_t* const hitBaseAddressDestination = SBTData + hitGroupsByteOffset;
-        uint8_t* const missBaseAddressDestination = SBTData + missGroupsByteOffset;
-
-        uint8_t* copySource = handlesData;
-
-        // copy raygen shader handle
-        memcpy(raygenBaseAddressDestination, copySource, raytracing->SBTGroupHandleSize);
-        copySource += raytracing->SBTGroupHandleSize;
-
-        // copy hit shader handles
-        for (uint32_t i = 0; i < hitGroupsCount; ++i)
-        {
-            memcpy(hitBaseAddressDestination + i * raytracing->SBTGroupHandleSizeAligned, copySource, raytracing->SBTGroupHandleSize);
-            copySource += raytracing->SBTGroupHandleSize;
-        }
-
-        // copy miss shaders
-        for (uint32_t i = 0; i < missGroupsCount; ++i)
-        {
-            memcpy(missBaseAddressDestination + i * raytracing->SBTGroupHandleSizeAligned, copySource, raytracing->SBTGroupHandleSize);
-            copySource += raytracing->SBTGroupHandleSize;
-        }
-    }
-
-    raytracePipeline.ShaderBindingTable = ib_allocBuffer(raytracing->Core, (ib_BufferDesc) {
-        .Usage = VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-        .Size = SBTDataSize + raytracing->SBTGroupBaseAlignment, // add extra space for whole SBT base alignment equal to SBTGroupBaseAlignment
-        .RequiredMemoryFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-    });
-
-    uint32_t const baseOffset = raytracing->SBTGroupBaseAlignment - raytracePipeline.ShaderBindingTable.DeviceAddress % raytracing->SBTGroupBaseAlignment;
-
-    ib_writeToBuffer(raytracing->Core, (ib_WriteToBufferDesc) {
-        .Buffer = &raytracePipeline.ShaderBindingTable,
-        .Data = SBTData,
-        .Size = SBTDataSize,
-        .WriteOffset = baseOffset
-    });
-
-    VkDeviceAddress const baseSBTAddress = baseOffset + raytracePipeline.ShaderBindingTable.DeviceAddress;
-
-    raytracePipeline.RaygenShaderRegion.deviceAddress = baseSBTAddress + raygenByteOffset;
-    raytracePipeline.RaygenShaderRegion.stride = raytracing->SBTGroupHandleSizeAligned;
-    raytracePipeline.RaygenShaderRegion.size = raygenSBTDataSize;
-
-    raytracePipeline.HitShaderRegion.deviceAddress = baseSBTAddress + hitGroupsByteOffset;
-    raytracePipeline.HitShaderRegion.stride = raytracing->SBTGroupHandleSizeAligned;
-    raytracePipeline.HitShaderRegion.size = hitSBTDataSize;
-
-    raytracePipeline.MissShaderRegion.deviceAddress = baseSBTAddress + missGroupsByteOffset;
-    raytracePipeline.MissShaderRegion.stride = raytracing->SBTGroupHandleSizeAligned;
-    raytracePipeline.MissShaderRegion.size = missSBTDataSize;
-
-    raytracePipeline.CallableShaderRegion = (VkStridedDeviceAddressRegionKHR) { 0 };
-
-    free(handlesData);
-    free(SBTData);
-
-    return raytracePipeline;
-}
-
-void ib_freeRaytracePipeline(ib_Raytracing* raytracing, ib_RaytracePipeline* pipeline)
-{
-    ib_freeBuffer(raytracing->Core, &pipeline->ShaderBindingTable);
-    vkDestroyPipeline(raytracing->Core->LogicalDevice, pipeline->VulkanPipeline, ib_NoVkAllocator);
-    vkDestroyPipelineLayout(raytracing->Core->LogicalDevice, pipeline->Layout, ib_NoVkAllocator);
-    ib_freeShaderInputLayout(raytracing->Core, &pipeline->ShaderInputLayout);
+    iba_killStackAllocator(allocator);
 }
 
 static ib_AccelerationStructureData buildAccelerationStructureInternal(
-    ib_Raytracing* raytracing, 
-    VkAccelerationStructureBuildGeometryInfoKHR* buildInfo, 
+    ib_Raytracing* raytracing,
+    VkAccelerationStructureBuildGeometryInfoKHR* buildInfo,
     uint32_t* primitiveCount,
     iba_StackAllocator* scratchMemoryStack,
-    ib_timelineSemaphore* buildingSemaphore)
+    ib_TimelineSemaphore* buildingSemaphore)
 {
     ib_AccelerationStructureData out = { 0 };
   
@@ -3058,24 +2257,24 @@ static ib_AccelerationStructureData buildAccelerationStructureInternal(
         &sizesInfo);
 
     out.Buffer = ib_allocBuffer(raytracing->Core, (ib_BufferDesc)
-								{
-									.Usage = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-									.Size = sizesInfo.accelerationStructureSize,
-									.RequiredMemoryFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-								});
+                                {
+                                    .Usage = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+                                    .Size = sizesInfo.accelerationStructureSize,
+                                    .RequiredMemoryFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+                                });
 
-	iba_StackAllocation allocation = iba_stackAlloc(scratchMemoryStack, (iba_StackAllocationRequest) {
-		.Alignment = raytracing->AccelerationStructureScratchBufferAlignment,
-		.Size = sizesInfo.buildScratchSize,
-	});
+    iba_StackAllocation allocation = iba_stackAlloc(scratchMemoryStack, (iba_StackAllocationRequest) {
+        .Alignment = raytracing->AccelerationStructureScratchBufferAlignment,
+        .Size = sizesInfo.buildScratchSize,
+    });
    
-	StackGpuMemoryPage* page = (StackGpuMemoryPage*)allocation.Page;
+    StackGpuMemoryPage* page = (StackGpuMemoryPage*)allocation.Page;
    
-	VkBufferDeviceAddressInfo addressQueryInfo = {
-		.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
-		.buffer = page->Buffer,
-	};
-	VkDeviceAddress stagingAddress = vkGetBufferDeviceAddressKHR(raytracing->Core->LogicalDevice, &addressQueryInfo) + allocation.Offset;
+    VkBufferDeviceAddressInfo addressQueryInfo = {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
+        .buffer = page->Buffer,
+    };
+    VkDeviceAddress stagingAddress = vkGetBufferDeviceAddressKHR(raytracing->Core->LogicalDevice, &addressQueryInfo) + allocation.Offset;
 
     VkAccelerationStructureCreateInfoKHR createASInfo = {
         .sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR,
@@ -3093,7 +2292,7 @@ static ib_AccelerationStructureData buildAccelerationStructureInternal(
     buildInfo->dstAccelerationStructure = out.AccelerationStructure;
     buildInfo->scratchData.deviceAddress = stagingAddress;
 
-    VkAccelerationStructureBuildRangeInfoKHR rangeInfo = (VkAccelerationStructureBuildRangeInfoKHR) 
+    VkAccelerationStructureBuildRangeInfoKHR rangeInfo = (VkAccelerationStructureBuildRangeInfoKHR)
     {
         .firstVertex = 0,
         .primitiveCount = *primitiveCount,
@@ -3152,7 +2351,7 @@ static ib_AccelerationStructureData buildAccelerationStructureInternal(
     return out;
 }
 
-ib_BLAS ib_allocBLAS(ib_Raytracing* raytracing, ib_BLASDesc desc, iba_StackAllocator* scratchMemoryStack, ib_timelineSemaphore* buildingSemaphore)
+ib_BLAS ib_allocBLAS(ib_Raytracing* raytracing, ib_BLASDesc desc, iba_StackAllocator* scratchMemoryStack, ib_TimelineSemaphore* buildingSemaphore)
 {
     ib_assert(desc.Triangles.Vertices != NULL && desc.Triangles.Indices != NULL);
 
@@ -3182,17 +2381,17 @@ ib_BLAS ib_allocBLAS(ib_Raytracing* raytracing, ib_BLASDesc desc, iba_StackAlloc
         .pGeometries = &ASGeometry,
     };
 
-	ib_BLAS blas = { 0 };
-	blas.Data = buildAccelerationStructureInternal(
-        raytracing, 
+    ib_BLAS blas = { 0 };
+    blas.Data = buildAccelerationStructureInternal(
+        raytracing,
         &BLASBuildInfo,
         &desc.Triangles.TrianglesCount,
         scratchMemoryStack,
         buildingSemaphore);
-	return blas;
+    return blas;
 }
 
-ib_TLAS ib_allocTLAS(ib_Raytracing* raytracing, ib_TLASDesc desc, iba_StackAllocator* scratchMemoryStack, ib_timelineSemaphore* buildingSemaphore)
+ib_TLAS ib_allocTLAS(ib_Raytracing* raytracing, ib_TLASDesc desc, iba_StackAllocator* scratchMemoryStack, ib_TimelineSemaphore* buildingSemaphore)
 {
     ib_assert(desc.InstancesBuffer != NULL);
 
@@ -3213,14 +2412,14 @@ ib_TLAS ib_allocTLAS(ib_Raytracing* raytracing, ib_TLASDesc desc, iba_StackAlloc
         .pGeometries = &ASGeometry
     };
 
-	ib_TLAS tlas = { 0 };
-	tlas.Data = buildAccelerationStructureInternal(
-        raytracing, 
-        &TLASBuildInfo, 
-        &desc.InstancesCount, 
-        scratchMemoryStack, 
+    ib_TLAS tlas = { 0 };
+    tlas.Data = buildAccelerationStructureInternal(
+        raytracing,
+        &TLASBuildInfo,
+        &desc.InstancesCount,
+        scratchMemoryStack,
         buildingSemaphore);
-	return tlas;
+    return tlas;
 }
 
 void ib_freeBLAS(ib_Raytracing* raytracing, ib_BLAS* accelerationStructure)
@@ -3234,3 +2433,107 @@ void ib_freeTLAS(ib_Raytracing* raytracing, ib_TLAS* accelerationStructure)
     vkDestroyAccelerationStructureKHR(raytracing->Core->LogicalDevice, accelerationStructure->Data.AccelerationStructure, ib_NoVkAllocator);
     ib_freeBuffer(raytracing->Core, &accelerationStructure->Data.Buffer);
 }
+
+// Utility constants to reduce friction when creating graphics pipelines.
+VkPipelineRasterizationStateCreateInfo const ib_RasterizationCullBackFaceCCW =
+{
+    .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+    .polygonMode = VK_POLYGON_MODE_FILL,
+    .cullMode = VK_CULL_MODE_BACK_BIT,
+    .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
+    .lineWidth = 1.0f
+};
+
+VkPipelineRasterizationStateCreateInfo const ib_RasterizationNoCull =
+{
+    .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+    .polygonMode = VK_POLYGON_MODE_FILL,
+    .cullMode = VK_CULL_MODE_NONE,
+    .lineWidth = 1.0f
+};
+
+VkPipelineVertexInputStateCreateInfo const ib_VertexInputNull =
+{
+    .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO
+};
+
+VkPipelineInputAssemblyStateCreateInfo const ib_InputAssemblyTriangleList =
+{
+    .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+    .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST
+};
+
+VkPipelineInputAssemblyStateCreateInfo const ib_InputAssemblyLineList =
+{
+    .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+    .topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST
+};
+
+VkPipelineDepthStencilStateCreateInfo const ib_DepthStateLessTestWriteNoStencil =
+{
+    .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+    .depthTestEnable = VK_TRUE,
+    .depthWriteEnable = VK_TRUE,
+    .depthCompareOp = VK_COMPARE_OP_LESS,
+    .stencilTestEnable = VK_FALSE,
+    .minDepthBounds = 0.0f,
+    .maxDepthBounds = 1.0f,
+};
+
+VkPipelineDepthStencilStateCreateInfo const ib_DepthStateLessTestNoWriteNoStencil =
+{
+    .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+    .depthTestEnable = VK_TRUE,
+    .depthWriteEnable = VK_FALSE,
+    .depthCompareOp = VK_COMPARE_OP_LESS,
+    .stencilTestEnable = VK_FALSE,
+    .minDepthBounds = 0.0f,
+    .maxDepthBounds = 1.0f,
+};
+
+VkPipelineDepthStencilStateCreateInfo const ib_DepthStateNoTestNoWrite =
+{
+    .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+};
+
+VkPipelineColorBlendAttachmentState const ib_BlendDescAlphaBlend =
+{
+    .blendEnable = VK_TRUE,
+    .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
+    .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+    .colorBlendOp = VK_BLEND_OP_ADD,
+    .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+    .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+    .alphaBlendOp = VK_BLEND_OP_ADD,
+    .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
+};
+
+VkPipelineColorBlendAttachmentState const ib_BlendDescNoBlend =
+{
+    .blendEnable = VK_FALSE,
+    .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
+};
+
+VkPipelineColorBlendAttachmentState const ib_BlendDescDualSourceBlend =
+{
+    .blendEnable = VK_TRUE,
+    .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
+    .dstColorBlendFactor = VK_BLEND_FACTOR_SRC1_COLOR,
+    .colorBlendOp = VK_BLEND_OP_ADD,
+    .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+    .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+    .alphaBlendOp = VK_BLEND_OP_ADD,
+    .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
+};
+
+VkPipelineColorBlendAttachmentState const ib_BlendDescAdditiveBlend =
+{
+    .blendEnable = VK_TRUE,
+    .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
+    .dstColorBlendFactor = VK_BLEND_FACTOR_ONE,
+    .colorBlendOp = VK_BLEND_OP_ADD,
+    .srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+    .dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+    .alphaBlendOp = VK_BLEND_OP_ADD,
+    .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
+};
